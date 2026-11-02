@@ -43,6 +43,7 @@ def main():
     mac = RELEASE / 'macos'; mac.mkdir(exist_ok=True)
     built = ROOT / 'dist' / 'Salt and Pepper Mac.zip'
     if built.exists(): shutil.copy2(built, mac / f'Salt-and-Pepper-{VERSION}-macOS-arm64.zip')
+    for dmg in (ROOT / 'dist').glob('*.dmg'): shutil.copy2(dmg, mac / dmg.name)
     windows = RELEASE / 'windows'; windows.mkdir(exist_ok=True)
     shutil.copy2(archive, windows / f'Salt-and-Pepper-{VERSION}-Windows-source.zip')
     installers = list((ROOT / 'dist' / 'windows').glob('*-setup.exe'))
@@ -55,7 +56,7 @@ def main():
         page.write_text(page.read_text().replace('.md)', ')'))
     (RELEASE/'RELEASE_NOTES.md').write_text((ROOT/'CHANGELOG.md').read_text())
     rows=[]
-    assets=[archive]+list(mac.glob('*.zip'))+list(windows.glob('*.exe'))+list(windows.glob('*.zip'))+list((RELEASE/'dependency-sources').glob('*.tgz'))+list((RELEASE/'dependency-sources').glob('*.tar.gz'))
+    assets=[archive]+list(mac.glob('*.zip'))+list(mac.glob('*.dmg'))+list(windows.glob('*.exe'))+list(windows.glob('*.zip'))+list((RELEASE/'dependency-sources').glob('*.tgz'))+list((RELEASE/'dependency-sources').glob('*.tar.gz'))
     for path in sorted(assets):
         rows.append(hashlib.sha256(path.read_bytes()).hexdigest()+'  '+path.relative_to(RELEASE).as_posix())
     (RELEASE/'SHA256SUMS.txt').write_text('\n'.join(rows)+'\n')

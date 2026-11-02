@@ -63,6 +63,7 @@ jobs:
           name: salt-and-pepper-${{ matrix.platform }}
           path: |
             dist/*.zip
+            dist/*.dmg
             dist/windows/*-setup.exe
             release/*.zip
             release/SHA256SUMS.txt

@@ -18,4 +18,7 @@ if [ -d '../dist/Salt and Pepper.app' ]; then
 fi
 ditto 'src-tauri/target/release/bundle/macos/Salt and Pepper.app' '../dist/Salt and Pepper.app'
 ditto -c -k --sequesterRsrc --keepParent '../dist/Salt and Pepper.app' '../dist/Salt and Pepper Mac.zip'
-echo "Ready: dist/Salt and Pepper.app"
+for dmg in src-tauri/target/release/bundle/dmg/*.dmg; do
+  cp "$dmg" ../dist/
+done
+echo "Ready: dist/Salt and Pepper.app and DMG"
