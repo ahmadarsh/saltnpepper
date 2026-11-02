@@ -27,9 +27,19 @@ tools/                Release assembly and validation
 
 The release source archive excludes private models, saved simulations, backups, caches and developer environments. Source checkout saves data in `pcb_simulator/data/`; packaged apps use their operating system application-data directory. Upgrading the app does not reset saved data.
 
+## Prepare your KiCad design
+
+1. Configure STEP export to include pads, tracks, filled copper zones, inner copper layers and vias. Keep shapes separate and leave via holes unfilled.
+2. Filter the target net in KiCad's export dialog, exclude the non-copper board body and component models, then export.
+3. Open the STEP in FreeCAD or another CAD application and inspect the geometry.
+4. Note the STEP pad names and positions for every input and output.
+5. Import the STEP into Salt and Pepper, find those pads, assign **+IN** / **+OUT**, verify red inputs and blue outputs, then run the simulation.
+
+See the [complete geometry preparation guide](docs/wiki/Prepare-geometry.md) for the export settings and pad-name checks.
+
 ## Documentation
 
-[Wiki home](docs/wiki/Home.md) · [Setup](docs/wiki/Setup.md) · [First simulation](docs/wiki/First-simulation.md) · [Solver](docs/wiki/Solver.md) · [Building releases](docs/wiki/Building-releases.md) · [Troubleshooting](docs/wiki/Troubleshooting.md)
+[Wiki home](docs/wiki/Home.md) · [Prepare KiCad geometry](docs/wiki/Prepare-geometry.md) · [Setup](docs/wiki/Setup.md) · [First simulation](docs/wiki/First-simulation.md) · [Solver](docs/wiki/Solver.md) · [Building releases](docs/wiki/Building-releases.md) · [Troubleshooting](docs/wiki/Troubleshooting.md)
 
 ## Licence
 

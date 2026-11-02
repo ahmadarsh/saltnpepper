@@ -6,6 +6,8 @@
 4. Run the simulation and wait for completion in Runs.
 5. Open Results. Check the approximately 0.172414 mΩ resistance and explore voltage drop/current density.
 
+For a KiCad design, follow [Prepare geometry from KiCad](Prepare-geometry.md) first. Include copper on all required layers and vias, keep shapes separate and via holes unfilled, filter the target net, and note the STEP pad names in CAD.
+
 For your own STEP file, select every relevant terminal solid with +IN or +OUT. Inputs share one potential, outputs share another. Current is the total across all inputs, not the current per pad. Copper must be connected. Check declared STEP units and displayed dimensions before running.
 
 For mesh convergence, enable finer comparison: it performs two solves within one saved run. Smaller mesh sizes increase memory and time substantially.
