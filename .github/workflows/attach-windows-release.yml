@@ -1,0 +1,45 @@
+name: Attach Windows installer to draft release
+on:
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: Successful native build run ID
+        required: true
+        default: '41480370531'
+      release_tag:
+        description: Existing draft release tag
+        required: true
+        default: v0.5.0
+permissions:
+  actions: read
+  contents: write
+jobs:
+  attach:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      BUILD_RUN_ID: ${{ inputs.build_run_id }}
+      RELEASE_TAG: ${{ inputs.release_tag }}
+    steps:
+      - name: Validate successful source build
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$BUILD_RUN_ID" =~ ^[0-9]+$ ]]
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          result=$(gh run view "$BUILD_RUN_ID" --json conclusion --jq .conclusion)
+          [[ "$result" == success ]]
+      - name: Download tested Windows artifact
+        run: gh run download "$BUILD_RUN_ID" --name salt-and-pepper-windows-x64 --dir artifact
+      - name: Attach installer and checksum without publishing the draft
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -d '' installers < <(find artifact -type f -name '*-setup.exe' -print0)
+          [[ ${#installers[@]} -eq 1 ]]
+          installer="${installers[0]}"
+          installer_name=$(basename "$installer")
+          digest=$(sha256sum "$installer" | cut -d ' ' -f 1)
+          printf '%s  %s\n' "$digest" "$installer_name" > Windows-SHA256SUMS.txt
+          gh release upload "$RELEASE_TAG" "$installer" Windows-SHA256SUMS.txt --clobber
