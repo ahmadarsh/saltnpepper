@@ -3,7 +3,8 @@ Salt and Pepper 0.5.0
 Start with README.md and docs/wiki/Setup.md.
 
 MAC APP: dist/Salt and Pepper.app (Apple Silicon, macOS 14+).
-WINDOWS APP: build with desktop/Build Windows App.ps1 or the GitHub Windows workflow.
+WINDOWS APP: download the x64 -setup.exe from https://github.com/ahmadarsh/saltnpepper/releases
+Build from source with desktop/Build Windows App.ps1.
 SOURCE: use the platform Setup and Start launchers in pcb_simulator.
 
 Public release files are assembled under release/ with a clean source tree and SHA256 checksums. Do not upload the whole workspace: backups and saved simulations are private.

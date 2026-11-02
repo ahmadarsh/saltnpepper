@@ -6,8 +6,8 @@ Local PCB electrical and thermal simulation for macOS and Windows. Import STEP c
 
 ## Get started
 
-- **Mac:** unpack the Mac release ZIP and drag **Salt and Pepper.app** into Applications. Requires Apple Silicon and macOS 14 or newer. The release candidate is ad hoc signed, not notarized.
-- **Windows:** run the Windows x64 `-setup.exe` installer. Requires Windows 10/11 x64. The installer offers Microsoft WebView2 installation if missing. Windows artifacts are produced by the Windows workflow; do not use the Mac executable on Windows.
+- **Mac:** open the [Mac DMG](https://github.com/ahmadarsh/saltnpepper/releases/download/v0.5.0/Salt-and-Pepper-0.5.0-macOS-arm64.dmg) and drag **Salt and Pepper.app** onto **Applications**. The app ZIP is also available. Requires Apple Silicon and macOS 14 or newer. The release candidate is ad hoc signed, not notarized.
+- **Windows:** run the [Windows x64 EXE installer](https://github.com/ahmadarsh/saltnpepper/releases/download/v0.5.0/Salt.and.Pepper_0.5.0_x64-setup.exe). Requires Windows 10/11 x64. The installer offers Microsoft WebView2 installation if missing. Windows artifacts are produced by the Windows workflow; do not use the Mac executable on Windows.
 - **From source:** see [Setup](docs/wiki/Setup.md). Python provides CAD/FEM; Rust/Tauri provides the desktop window. Packaged desktop users do not need to install Python or Rust.
 
 Click **Load example model**, then **Example ports**. Start with electrical analysis, current **0.1 A**, ambient **20 °C**, mesh **0.8 mm**, and finer mesh comparison off. The supplied 1 × 1 × 10 mm copper bar should measure about **0.172414 mΩ** at conductivity 58 MS/m. See [First simulation](docs/wiki/First-simulation.md).
@@ -46,6 +46,8 @@ See the [complete geometry preparation guide](docs/wiki/Prepare-geometry.md) for
 Copyright 2026 Arsh Ahmad and contributors. Software is **GPL-3.0-or-later**; documentation, original icons/artwork and the sample STEP geometry are **CC BY 4.0**. Python generator code remains GPL-3.0-or-later. See [LICENSE](LICENSE), [documentation/model licence](licenses/CC-BY-4.0.txt), and [third-party notices](THIRD_PARTY_NOTICES.md). Third-party components retain their own licences. Creative Commons recommends software licences for code: <https://creativecommons.org/faq/#can-i-apply-a-creative-commons-license-to-software>.
 
 Simulation is an engineering approximation: review mesh convergence and boundary conditions before relying on results. Thermal analysis models copper conduction and approximate convection; it does not include a full PCB dielectric/component thermal stack.
+
+[V0.5 build and test results](docs/Release-validation.md): native Mac arm64 and Windows x64 build jobs passed.
 
 ## Roadmap
 

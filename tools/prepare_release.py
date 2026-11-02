@@ -63,14 +63,14 @@ def main():
     (RELEASE/'README.md').write_text('''# Salt and Pepper V0.5 release candidate
 
 - `source/` and `Salt-and-Pepper-0.5.0-source.zip`: clean public repository content.
-- `macos/`: Apple Silicon app ZIP, macOS 14+; ad hoc signed, not notarized.
+- `macos/`: Apple Silicon DMG and app ZIP, macOS 14+; ad hoc signed, not notarized.
 - `windows/`: Windows x64 installer when built on Windows, otherwise an explicit build-pending notice.
 - `wiki/`: setup and usage pages for the separate GitHub wiki repository.
 - `dependency-sources/`: versioned Gmsh/OpenCASCADE sources collected separately.
 - `SHA256SUMS.txt`: hashes for the release archives.
 - `VALIDATION.md`: measured checks and remaining platform validation.
 
-Nothing has been published to GitHub. Private models, saved runs, backups and environments are excluded from the source archive. Software is GPL-3.0-or-later; documentation, original artwork and sample geometry are CC BY 4.0. Keep third-party notices and corresponding dependency sources with public releases.
+This assembly command does not publish to GitHub. Private models, saved runs, backups and environments are excluded from the source archive. Software is GPL-3.0-or-later; documentation, original artwork and sample geometry are CC BY 4.0. Keep third-party notices and corresponding dependency sources with public releases.
 ''')
     (RELEASE/'SOURCE_FILES.txt').write_text('\n'.join(p.relative_to(ROOT).as_posix() for p in sorted(paths))+'\n')
     print(f'Prepared {len(paths)} source files; {archive.stat().st_size:,} byte source ZIP')

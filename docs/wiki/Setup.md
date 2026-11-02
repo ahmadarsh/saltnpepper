@@ -2,7 +2,7 @@
 
 ## Packaged application
 
-**Mac:** Apple Silicon, macOS 14+. Unzip, drag Salt and Pepper.app to Applications and open it. This candidate is ad hoc signed and not notarized. If macOS blocks a downloaded build you trust, use System Settings → Privacy & Security → Open Anyway. No global Python installation is needed.
+**Mac:** Apple Silicon, macOS 14+. Download the Mac DMG from the [V0.5 release](https://github.com/ahmadarsh/saltnpepper/releases/tag/v0.5.0), open it, and drag Salt and Pepper.app onto the Applications shortcut. Open the app from Applications. A ZIP is also available. This candidate is ad hoc signed and not notarized. If macOS blocks a downloaded build you trust, use System Settings → Privacy & Security → Open Anyway. No global Python installation is needed.
 
 **Windows:** Windows 10/11 x64. Run the NSIS `-setup.exe`. WebView2 is required and the installer downloads its bootstrapper if needed, so first installation can need internet. The unsigned candidate may show SmartScreen publisher warnings; check the release checksum and source before choosing to run it. Windows binary availability and validation are recorded on each release.
 

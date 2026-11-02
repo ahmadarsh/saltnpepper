@@ -10,4 +10,4 @@
 - Fix Windows parent-process monitoring and hide backend console windows.
 - Add clean source release assembly, checksums, licence notices, setup documentation and GitHub wiki pages.
 
-Mac build and test status is recorded in release/VALIDATION.md. Windows installers require the Windows workflow and subsequent Windows GUI validation.
+Mac and Windows native builds and automated tests passed in GitHub Actions. See [release validation](docs/Release-validation.md). Manual native-window GUI validation remains pending.
