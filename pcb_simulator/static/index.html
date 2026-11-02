@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="en" data-theme="salt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Salt and Pepper | PCB Power Integrity Workbench</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div id="welcome" class="welcome" role="dialog" aria-label="Salt and Pepper introduction">
+    <button id="skipWelcome" class="skip">Skip intro</button>
+    <div class="welcome-inner">
+      <svg class="shakers" viewBox="0 0 68 56" fill="none" aria-hidden="true">
+        <g class="shaker-one">
+          <path d="M9 17h19l3 28a5 5 0 0 1-5 5H11a5 5 0 0 1-5-5L9 17Z" fill="currentColor" opacity=".16" stroke="currentColor" stroke-width="2"/>
+          <path d="M9 17v-5a4 4 0 0 1 4-4h11a4 4 0 0 1 4 4v5H9Z" fill="currentColor"/>
+          <circle cx="15" cy="12" r="1" fill="white"/>
+          <circle cx="22" cy="12" r="1" fill="white"/>
+        </g>
+        <g class="shaker-two">
+          <path d="M40 17h19l3 28a5 5 0 0 1-5 5H42a5 5 0 0 1-5-5l3-28Z" fill="currentColor" stroke="currentColor" stroke-width="2"/>
+          <path d="M40 17v-5a4 4 0 0 1 4-4h11a4 4 0 0 1 4 4v5H40Z" fill="currentColor" opacity=".6"/>
+          <circle cx="46" cy="12" r="1" fill="white"/>
+          <circle cx="53" cy="12" r="1" fill="white"/>
+        </g>
+        <g class="sprinkles" fill="currentColor">
+          <circle cx="31" cy="3" r="1.5"/>
+          <circle cx="36" cy="7" r="1"/>
+          <circle cx="28" cy="8" r="1"/>
+        </g>
+      </svg>
+      <div class="grains" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="welcome-name">Salt and Pepper</div>
+      <small>cooked by Arsh Ahmad</small>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <a class="brand" href="#setup" aria-label="Salt and Pepper setup">
+      <svg class="shakers" viewBox="0 0 68 56" fill="none" aria-hidden="true">
+        <g class="shaker-one">
+          <path d="M9 17h19l3 28a5 5 0 0 1-5 5H11a5 5 0 0 1-5-5L9 17Z" fill="currentColor" opacity=".16" stroke="currentColor" stroke-width="2"/>
+          <path d="M9 17v-5a4 4 0 0 1 4-4h11a4 4 0 0 1 4 4v5H9Z" fill="currentColor"/>
+          <circle cx="15" cy="12" r="1" fill="white"/>
+          <circle cx="22" cy="12" r="1" fill="white"/>
+        </g>
+        <g class="shaker-two">
+          <path d="M40 17h19l3 28a5 5 0 0 1-5 5H42a5 5 0 0 1-5-5l3-28Z" fill="currentColor" stroke="currentColor" stroke-width="2"/>
+          <path d="M40 17v-5a4 4 0 0 1 4-4h11a4 4 0 0 1 4 4v5H40Z" fill="currentColor" opacity=".6"/>
+          <circle cx="46" cy="12" r="1" fill="white"/>
+          <circle cx="53" cy="12" r="1" fill="white"/>
+        </g>
+        <g class="sprinkles" fill="currentColor">
+          <circle cx="31" cy="3" r="1.5"/>
+          <circle cx="36" cy="7" r="1"/>
+          <circle cx="28" cy="8" r="1"/>
+        </g>
+      </svg>
+      <span>
+        <strong>Salt and Pepper</strong>
+        <small>PCB POWER INTEGRITY CAD</small>
+      </span>
+    </a>
+
+    <nav class="main-nav" aria-label="Main navigation">
+      <a href="#setup" data-nav="setup"><span class="nav-idx">01</span>Setup</a>
+      <a href="#runs" data-nav="runs"><span class="nav-idx">02</span>Runs<span id="runsBadge" class="nav-badge" hidden>0</span></a>
+      <a href="#results" data-nav="results"><span class="nav-idx">03</span>Results</a>
+    </nav>
+
+    <div class="topright">
+      <button id="example" class="button secondary compact-btn" type="button" title="Import and load the supplied copper bar example">
+        Load example model <span>&#8599;</span>
+      </button>
+      <button id="clearWorkspace" class="button secondary compact-btn" type="button" title="Reset tools, selections, camera and conditions; keep saved files">Clear workspace</button>
+      <label class="accent-control">Accent <select id="accentColour" aria-label="Interface accent colour"><option value="mint">Mint</option><option value="cyan">Cyan</option><option value="violet">Violet</option><option value="rose">Rose</option><option value="amber">Amber</option></select></label>
+      <span id="health" class="status"><i></i> Connecting</span>
+      <div class="theme-switch" role="group" aria-label="Color theme">
+        <button type="button" data-theme-choice="salt" aria-pressed="true">Salt</button>
+        <button type="button" data-theme-choice="pepper" aria-pressed="false">Pepper</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="cad-main">
+    <!-- 01: SETUP VIEW (FIT-TO-WINDOW CAD WORKBENCH) -->
+    <div id="setupView" class="page-view setup-view">
+      <div class="cad-workspace">
+        <!-- LEFT DOCK: MODELS & SOLIDS EXPLORER -->
+        <aside class="cad-left-dock">
+          <section class="panel models-panel">
+            <div class="panel-head compact">
+              <div class="panel-title-row">
+                <span class="step-pill">01</span>
+                <div>
+                  <h2>PCB Model</h2>
+                  <p>Import STEP copper geometry</p>
+                </div>
+              </div>
+              <button id="refreshModels" class="icon-btn" type="button" title="Refresh models">↻</button>
+            </div>
+            <div class="models-body">
+              <label id="dropzone" class="dropzone" tabindex="0">
+                <input id="file" type="file" accept=".step,.stp" hidden>
+                <span class="upload-icon">↑</span>
+                <div>
+                  <strong>Drop STEP file here</strong>
+                  <small>or <u>browse</u> · .step / .stp</small>
+                </div>
+              </label>
+              <div id="models" class="model-list">
+                <p class="muted">No models imported yet.</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel solids-panel">
+            <div class="panel-head compact">
+              <div class="panel-title-row">
+                <span class="step-pill">02</span>
+                <div>
+                  <h2>Pads &amp; Solids</h2>
+                  <p>Hover to inspect · assign to ports</p>
+                </div>
+              </div>
+              <span id="solidCountBadge" class="unit-badge">0 items</span>
+            </div>
+            <div class="port-body">
+              <div class="search-wrap">
+                <span>⌕</span>
+                <input id="search" placeholder="Search solids or pads…" aria-label="Search solids">
+              </div>
+              <div class="filter-row">
+                <label class="check"><input id="allSolids" type="checkbox"> Show all solids</label>
+                <button id="examplePorts" class="text-button" type="button">Use example ports</button>
+              </div>
+              <div id="namingNote" class="hint" hidden></div>
+              <div id="solids" class="solids">
+                <p class="empty">Select a model to see its pads.</p>
+              </div>
+            </div>
+          </section>
+        </aside>
+
+        <!-- CENTER STAGE: 3D CAD VIEWPORT + OPERATING CONDITIONS RIBBON -->
+        <div class="cad-center-stage">
+          <section class="panel geometry">
+            <div class="panel-head compact">
+              <div class="panel-title-row">
+                <span class="step-pill">3D</span>
+                <div class="title-inline">
+                  <h2 id="modelTitle">Model preview</h2>
+                  <p id="modelSubtitle">Select a processed model to begin.</p>
+                </div>
+              </div>
+              <div class="geometry-head-right">
+                <div class="legend">
+                  <span><i class="swatch copper"></i>Copper</span>
+                  <span><i class="swatch input"></i>Input (Source)</span>
+                  <span><i class="swatch output"></i>Output (Load)</span>
+                </div>
+                <label class="check"><input id="hideOthers" type="checkbox"> Hide unassigned</label>
+              </div>
+            </div>
+
+            <div id="viewport" class="viewport">
+              <canvas id="canvas"></canvas>
+
+              <!-- Floating CAD View Controls -->
+              <div class="view-controls floating-tools" role="toolbar" aria-label="3D camera controls">
+                <button type="button" data-view="fit" title="Fit view (F)">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/><circle cx="8" cy="8" r="2"/></svg>
+                  <span>Fit</span>
+                </button>
+                <button type="button" data-view="iso" title="Isometric 3D view (I)">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2 14 5.5v5L8 14 2 10.5v-5L8 2Z"/><path d="M2 5.5 8 9l6-3.5M8 9v5"/></svg>
+                  <span>3D</span>
+                </button>
+                <button type="button" data-view="top" title="Top view Z+ (T)">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/><circle cx="8" cy="8" r="2"/></svg>
+                  <span>Top</span>
+                </button>
+                <button type="button" data-view="bottom" title="Bottom view Z- (B)">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5" stroke-dasharray="2.5 2"/><path d="M6 6l4 4M10 6l-4 4"/></svg>
+                  <span>Bottom</span>
+                </button>
+                <button type="button" data-view="zoom-in" title="Zoom in">+</button>
+                <button type="button" data-view="zoom-out" title="Zoom out">−</button>
+              </div>
+
+              <div id="previewMessage" class="preview-message">
+                <span class="preview-symbol">⌬</span>
+                <strong>Ready for geometry</strong>
+                <small>Select a STEP model or load the 3V3 example to inspect in 3D</small>
+              </div>
+
+              <!-- 3D Orientation Gizmo -->
+              <svg id="axisGizmo" class="axis-gizmo" viewBox="-36 -36 72 72" aria-hidden="true">
+                <circle cx="0" cy="0" r="30" fill="var(--surface)" fill-opacity="0.72" stroke="var(--line)" stroke-width="1"/>
+                <line id="gx" x1="0" y1="0" x2="22" y2="0" stroke="#e05252" stroke-width="2" stroke-linecap="round"/>
+                <line id="gy" x1="0" y1="0" x2="0" y2="-22" stroke="#38b26f" stroke-width="2" stroke-linecap="round"/>
+                <line id="gz" x1="0" y1="0" x2="14" y2="14" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+                <text id="gxt" x="25" y="3" fill="#e05252" font-size="8" font-weight="700" text-anchor="middle">X</text>
+                <text id="gyt" x="0" y="-24" fill="#38b26f" font-size="8" font-weight="700" text-anchor="middle">Y</text>
+                <text id="gzt" x="18" y="18" fill="#3b82f6" font-size="8" font-weight="700" text-anchor="middle">Z</text>
+              </svg>
+
+              <div class="viewport-meta">
+                <span id="hoverReadout" class="hover-readout"><i></i> 3D CAD PREVIEW</span>
+                <span>DRAG ORBIT · SHIFT+DRAG PAN · SCROLL ZOOM</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- BOTTOM OPERATING CONDITIONS & RUN BAR -->
+          <section class="panel setup">
+            <form id="runForm" class="setup-bar-form">
+              <div class="setup-bar-head">
+                <span class="step-pill">04</span>
+                <div>
+                  <h2>Operating Conditions</h2>
+                  <p>SI units · STEP thickness</p>
+                </div>
+              </div>
+
+              <div class="fields">
+                <label>Supply voltage
+                  <div><input name="voltage_V" type="number" value="3.3" step="any" required><span>V</span></div>
+                </label>
+                <label>Total current
+                  <div><input name="current_A" type="number" value="2" step="any" min="0.000001" required><span>A</span></div>
+                </label>
+                <label>Ambient temp
+                  <div><input name="ambient_C" type="number" value="30" step="any" required><span>°C</span></div>
+                </label>
+                <label>Allowable rise
+                  <div><input name="allowable_rise_C" type="number" value="45" step="any" min="0.000001" required><span>°C</span></div>
+                </label>
+                <label>Mesh size
+                  <div><input name="mesh_size_mm" type="number" value="1" step="any" min="0.001" required><span>mm</span></div>
+                </label>
+                <label>Analysis
+                  <select name="analysis_mode">
+                    <option value="electrothermal">Electrothermal</option>
+                    <option value="electrical">Electrical only</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="setup-bar-actions">
+                <details id="advDetails" class="adv-popover">
+                  <summary class="button secondary compact-btn" title="Material, cooling, contact faces and mesh refinement">
+                    ⚙ Advanced <span>＋</span>
+                  </summary>
+                  <div class="adv-popover-panel">
+                    <div class="adv-popover-head">
+                      <div>
+                        <strong>Advanced Material, Boundary &amp; Solver Settings</strong>
+                        <small>Linear tetrahedral FEM · steady conduction &amp; convection</small>
+                      </div>
+                      <span class="unit-badge">SI UNITS</span>
+                    </div>
+                    <div class="fields advanced">
+                      <label>Conductivity at 20 °C
+                        <div><input name="conductivity_20_S_m" type="number" value="58000000" step="any" min="1"><span>S/m</span></div>
+                      </label>
+                      <label>Temp coefficient
+                        <div><input name="alpha_per_K" type="number" value="0.00393" step="any"><span>1/K</span></div>
+                      </label>
+                      <label>Thermal conductivity
+                        <div><input name="thermal_k_W_mK" type="number" value="400" step="any" min="0.001"><span>W/mK</span></div>
+                      </label>
+                      <label>Convection coeff
+                        <div><input name="convection_h_W_m2K" type="number" value="5" step="any" min="0"><span>W/m²K</span></div>
+                      </label>
+                      <label>Cooling surface
+                        <select name="cooling_mode">
+                          <option value="outer_faces">Outer faces</option>
+                          <option value="all_exterior">All exterior faces</option>
+                        </select>
+                      </label>
+                      <label>Outer band fraction
+                        <div><input name="outer_band_fraction" type="number" value="0.05" step="any" min="0" max="1"><span>frac</span></div>
+                      </label>
+                      <label>Input contact face
+                        <select name="input_face">
+                          <option>auto</option>
+                          <option>top</option>
+                          <option>bottom</option>
+                        </select>
+                      </label>
+                      <label>Output contact face
+                        <select name="output_face">
+                          <option>auto</option>
+                          <option>top</option>
+                          <option>bottom</option>
+                        </select>
+                      </label>
+                      <label>Refinement factor
+                        <div><input name="refinement_factor" type="number" value="0.6" step="any" min="0.01" max="1"><span>×</span></div>
+                      </label>
+                      <label class="refine">
+                        <input name="refine" type="checkbox" checked> Compare finer mesh
+                      </label>
+                    </div>
+                    <p class="hint">Convection is an approximate cooling boundary; results depend on the chosen coefficient and exposed surfaces.</p>
+                  </div>
+                </details>
+
+                <button class="button primary run-btn" id="runButton" type="submit">
+                  ▶ Run simulation
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+
+        <!-- RIGHT DOCK: PORT CONNECTIONS -->
+        <aside class="cad-right-dock">
+          <section class="panel ports">
+            <div class="panel-head compact">
+              <div class="panel-title-row">
+                <span class="step-pill">03</span>
+                <div>
+                  <h2>Define Ports</h2>
+                  <p>Drag solids or click +IN / +OUT</p>
+                </div>
+              </div>
+              <button id="clearPorts" class="text-button" type="button" title="Clear all assigned ports">Clear</button>
+            </div>
+
+            <div class="groups">
+              <div id="inputGroup" class="group input-group" data-group="input">
+                <div class="group-head">
+                  <div class="group-title">
+                    <span class="group-dot"></span>
+                    <div>
+                      <strong>Input pads</strong>
+                      <small>SOURCE (+V)</small>
+                    </div>
+                  </div>
+                  <span id="inputCount" class="count-pill">0</span>
+                </div>
+                <div id="inputItems" class="group-items">
+                  <p>Drop input pads here</p>
+                </div>
+              </div>
+
+              <div id="outputGroup" class="group output-group" data-group="output">
+                <div class="group-head">
+                  <div class="group-title">
+                    <span class="group-dot"></span>
+                    <div>
+                      <strong>Output pads</strong>
+                      <small>LOAD (SINK)</small>
+                    </div>
+                  </div>
+                  <span id="outputCount" class="count-pill">0</span>
+                </div>
+                <div id="outputItems" class="group-items">
+                  <p>Drop output pads here</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="side-note">
+              <span>◇</span>
+              <p>Each group forms one equipotential port. Current is the total through the port. Unselected solids are fused as copper.</p>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </div>
+
+    <!-- 02: RUNS VIEW (FIT-TO-WINDOW SPLIT WORKSPACE) -->
+    <section id="runsView" class="page-view runs-view" hidden>
+      <div class="runs-layout">
+        <div class="runs-header panel">
+          <div class="panel-title-row">
+            <span class="step-pill">02</span>
+            <div>
+              <h1>Simulation runs &amp; live activity</h1>
+              <p>Monitor CAD fusion, conformal meshing, and FEM solve stages or open completed analyses.</p>
+            </div>
+          </div>
+          <div class="runs-header-actions">
+            <button id="deleteRuns" class="button secondary compact-btn" type="button">Delete all runs</button>
+            <button id="refreshRuns" class="button secondary compact-btn" type="button">Refresh &#8635;</button>
+            <a href="#setup" class="button primary compact-btn">+ New simulation</a>
+          </div>
+        </div>
+
+        <div class="runs-split">
+          <section class="panel activity-col">
+            <div class="panel-head compact">
+              <div class="panel-title-row">
+                <span class="step-pill">LIVE</span>
+                <div>
+                  <h2>Worker queue &amp; job logs</h2>
+                  <p>Active background tasks and execution logs</p>
+                </div>
+              </div>
+            </div>
+            <div id="jobs" class="scroll-pane">
+              <p class="empty">No active worker jobs in this session.</p>
+            </div>
+          </section>
+
+          <section class="panel activity-col">
+            <div class="panel-head compact">
+              <div class="panel-title-row">
+                <span class="step-pill">RUNS</span>
+                <div>
+                  <h2>Saved simulation runs</h2>
+                  <p>Select any solved run to inspect 3D fields and export artifacts</p>
+                </div>
+              </div>
+            </div>
+            <div id="runs" class="scroll-pane">
+              <p class="empty">No simulations yet. Configure a model and start a run.</p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03: RESULTS VIEW (FIT-TO-WINDOW FULL-VIEWPORT POST-PROCESSOR) -->
+    <section id="resultsView" class="page-view results-view" hidden>
+      <div id="result" class="result-container">
+        <div class="panel result-empty">
+          <h2>No run selected yet.</h2>
+          <p>Choose a completed run to explore its 3D fields, terminal metrics, and mesh artifacts.</p>
+          <div class="empty-actions">
+            <a class="button primary" href="#runs">Browse runs &#8599;</a>
+            <a class="button secondary" href="#setup">Back to setup</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="statusbar">
+    <div class="status-left">
+      <strong>Salt and Pepper</strong>
+      <span class="status-sep">·</span>
+      <span>LOCAL PCB SIMULATION WORKBENCH</span>
+      <span class="status-sep">·</span>
+      <span id="workspaceStatus" class="status-hint">SI Units (mm, V, A, °C)</span>
+    </div>
+    <small>cooked by Arsh Ahmad</small>
+  </footer>
+
+  <dialog id="deleteDialog" aria-labelledby="deleteTitle" aria-describedby="deleteMessage">
+    <form method="dialog">
+      <h2 id="deleteTitle">Delete saved item</h2>
+      <p id="deleteMessage"></p>
+      <p>This removes the saved files permanently.</p>
+      <div class="dialog-actions"><button id="cancelDelete" value="cancel" type="submit">Cancel</button><button id="confirmDelete" class="danger" value="delete" type="submit">Delete</button></div>
+    </form>
+  </dialog>
+  <div id="toast" role="status"></div>
+  <script src="/app.js"></script>
+</body>
+</html>

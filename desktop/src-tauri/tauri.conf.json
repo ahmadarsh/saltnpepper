@@ -1,0 +1,41 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Salt and Pepper",
+  "version": "0.5.0",
+  "identifier": "com.arshahmad.salt-and-pepper",
+  "build": {
+    "frontendDist": "../shell"
+  },
+  "app": {
+    "windows": [],
+    "security": {
+      "capabilities": []
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "app"
+    ],
+    "category": "DeveloperTool",
+    "shortDescription": "Local PCB electrical and thermal simulation",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns"
+    ],
+    "resources": {
+      "../backend-dist/": "backend/",
+      "../licenses/": "licenses/",
+      "../README.md": "README.md"
+    },
+    "macOS": {
+      "minimumSystemVersion": "14.0",
+      "signingIdentity": "-"
+    },
+    "license": "GPL-3.0-or-later",
+    "licenseFile": "../../licenses/GPL-3.0.txt",
+    "copyright": "Copyright 2026 Arsh Ahmad and contributors"
+  }
+}

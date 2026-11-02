@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Salt and Pepper - Results</title>
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('salt-pepper-theme')==='pepper'?'pepper':'salt';}catch(_){document.documentElement.dataset.theme='salt';}if(new URLSearchParams(location.search).get('embedded')==='1')document.documentElement.classList.add('embedded');</script>
+<style>
+:root{color-scheme:light;--bg:#f3f2ed;--panel:#ffffff;--panel2:#f4f6f5;--scene:#ffffff;--line:#dfe5e2;--text:#18222a;--muted:#61707a;--accent:#2468db;--soft:#e8f0fe;--warning:#8b6429;--error:#ad3737}
+:root[data-theme=pepper]{color-scheme:dark;--bg:#030405;--panel:#090c10;--panel2:#10151b;--scene:#000000;--line:#203139;--text:#f0f4ef;--muted:#93a39e;--accent:#4dffcc;--soft:#10271f;--warning:#dfc18c;--error:#f2a7a7}
+*{box-sizing:border-box;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+html,body{margin:0;height:100dvh;overflow:hidden;background:var(--bg);color:var(--text);font:12.5px/1.38 system-ui,-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+header{height:52px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;gap:16px;background:var(--panel);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:9px;flex-shrink:0}.brand svg{width:32px;height:32px;color:var(--accent)}
+h1{font-size:15px;font-weight:700;letter-spacing:-.35px;margin:0}
+.brand-caption{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);margin-left:8px;padding:2px 8px;border-radius:999px;background:var(--panel2);border:1px solid var(--line)}
+.header-actions{display:flex;align-items:center;gap:10px}small,.muted{color:var(--muted)}
+.tag{color:var(--muted);font-size:10.5px;white-space:nowrap;padding:4px 10px;border-radius:999px;background:var(--panel2);border:1px solid var(--line)}
+.theme-toggle{display:inline-flex;align-items:center;justify-content:center;gap:7px;width:auto;min-width:86px;padding:5px 13px;border-radius:999px;white-space:nowrap}
+.theme-dot{width:9px;height:9px;border:1px solid var(--muted);border-radius:50%;background:var(--accent)}
+main{display:grid;grid-template-columns:274px minmax(0,1fr);gap:12px;height:calc(100dvh - 52px);padding:12px 14px}
+aside{overflow-x:hidden;overflow-y:auto;background:var(--panel);padding:13px 14px;border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 24px -4px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:9px}
+section{padding-bottom:9px;border-bottom:1px solid var(--line)}
+h2{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin:0 0 6px}
+label{display:block;margin:6px 0 3px;font-size:10.5px;font-weight:600;color:var(--muted)}
+.check-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.check-row label{display:flex;align-items:center;gap:5px;margin:0;color:var(--text);font-size:10.5px;cursor:pointer;white-space:nowrap}
+select,input[type=number],button{font:inherit;font-size:11.5px;color:inherit;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:5px 9px;width:100%;min-width:0}
+button{cursor:pointer;font-weight:650;background:var(--panel);border-radius:999px;transition:all .14s ease}
+button:hover{border-color:var(--accent);background:var(--soft)}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=range],input[type=checkbox]{accent-color:var(--accent);margin:0}
+input[type=range]{width:100%;height:18px}
+.pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;align-items:end}
+.buttons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-top:5px}
+.buttons.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.buttons button{font-size:10.5px;padding:5px 4px}
+.hint{font-size:10px;line-height:1.4;color:var(--muted);margin:3px 0 0}
+.status{font-size:10px;color:var(--warning);line-height:1.35;margin:4px 0 0}
+.viewport{position:relative;min-width:0;overflow:hidden;background:var(--scene);border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 24px -4px rgba(0,0,0,.06)}
+canvas#scene{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+canvas#scene:active{cursor:grabbing}
+.floating{position:absolute;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 13px;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.1)}
+.notice{left:14px;top:14px;max-width:min(360px,65%);font-size:10.5px;color:var(--muted);line-height:1.4}
+.notice b{display:block;color:var(--text);font-size:11.5px;font-weight:650;margin-bottom:2px}
+.legend{right:14px;bottom:14px;width:170px}
+.legend h3{margin:0 0 2px;font-size:11px;font-weight:650;line-height:1.3}
+.legend small{font-size:10px}
+.scale-layout{display:grid;grid-template-columns:12px 1fr;gap:10px;height:150px;margin-top:8px}
+.bar{height:100%;border-radius:999px;background:linear-gradient(0deg,#a001e7,#1950ff,#00edff,#3fff50,#fff300,#ff8900,#ff1919)}
+.ticks{display:flex;flex-direction:column-reverse;justify-content:space-between;font-size:9.5px;font-variant-numeric:tabular-nums;font-weight:600}
+.legend p{font-size:9.5px;line-height:1.35;margin:7px 0 0;color:var(--muted)}
+.navhint{bottom:14px;left:14px;font-size:9.5px;font-weight:600;color:var(--muted);padding:6px 12px;border-radius:999px}
+.error{color:var(--error)}
+details{font-size:10.5px;line-height:1.45}
+summary{cursor:pointer;color:var(--text);font-weight:650;padding:2px 0;user-select:none}
+h3{font-size:11px;margin:8px 0 4px}[hidden]{display:none!important}
+.embedded header{display:none}
+.embedded main{height:100dvh;padding:0;gap:10px}
+@media(max-width:900px){main{grid-template-columns:236px minmax(0,1fr);padding:8px;gap:8px}.tag{display:none}}
+@media(max-width:760px){main{grid-template-columns:200px minmax(0,1fr)}.legend{width:min(230px,calc(100% - 20px));right:10px;bottom:10px}.scale-layout{display:block;height:auto;margin-top:6px}.bar{height:10px;margin-bottom:4px}.ticks{flex-direction:row;font-size:8.5px}.navhint{display:none}#operatingPoint{display:none}}
+@media(max-width:480px){header{height:44px;padding:6px 10px}main{height:calc(100dvh - 44px);grid-template-columns:152px minmax(0,1fr);padding:6px;gap:6px}aside{padding:8px}.pair,.check-row{grid-template-columns:1fr}.embedded main{padding:4px;gap:4px;grid-template-columns:148px minmax(0,1fr)}}
+:root[data-theme=pepper] header{box-shadow:0 1px 0 #4dffcc55,0 4px 20px #4dffcc0a}:root[data-theme=pepper] h2{color:#4dffcc;text-shadow:0 0 12px #4dffcc44}:root[data-theme=pepper] button:hover{box-shadow:0 0 12px #4dffcc22}input[type=color]{width:100%;height:30px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);cursor:pointer}
+</style></head>
+<body>
+<header><div class="brand"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><g transform="rotate(-10 14 25)"><path d="M8 15h13l2 22a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3l2-22Z" fill="var(--panel)" stroke="currentColor" stroke-width="1.7"/><path d="M8 15V9a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v6H8Z" fill="var(--soft)" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="11" r="1" fill="currentColor"/><circle cx="17" cy="11" r="1" fill="currentColor"/><path d="M11 25h7M11 30h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></g><g transform="rotate(10 34 25)"><path d="M28 15h13l2 22a3 3 0 0 1-3 3H29a3 3 0 0 1-3-3l2-22Z" fill="currentColor"/><path d="M28 15V9a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v6H28Z" fill="var(--panel)" stroke="currentColor" stroke-width="1.7"/><circle cx="32" cy="11" r="1" fill="currentColor"/><circle cx="37" cy="11" r="1" fill="currentColor"/><circle cx="33" cy="26" r="1.2" fill="var(--panel)"/><circle cx="37" cy="31" r="1.2" fill="var(--panel)"/><circle cx="32" cy="35" r="1.2" fill="var(--panel)"/></g></svg><h1>Salt and Pepper<span class="brand-caption">Results</span></h1></div><small id="operatingPoint"></small><div class="header-actions"><span class="tag">Standalone result / offline ready</span><button id="themeToggle" class="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to Pepper theme"><span class="theme-dot" aria-hidden="true"></span><span id="themeName">Salt</span></button></div></header>
+<main><aside><section><h2>Solved result</h2><div id="resultSummary" class="hint"></div><p id="thermalNote" class="status"></p></section>
+<section><h2>Display field</h2><label for="field">Colour by</label><select id="field"></select><p id="fieldStatus" class="status" aria-live="polite"></p>
+<div class="pair"><div><label for="palette">Colour map</label><select id="palette"><option value="rainbow">Rainbow</option><option value="neon">Neon</option><option value="heat">Heat</option><option value="coolwarm">Blue to red</option><option value="mono">Grayscale</option></select></div><div><label for="copperColor">Geometry colour</label><input id="copperColor" type="color" value="#d18a4b" title="Colour used for Copper geometry"></div></div>
+<div class="pair"><div><label for="minimum">Scale min</label><input id="minimum" type="number" step="any" value="0"></div><div><label for="maximum">Scale max</label><input id="maximum" type="number" step="any" value="1"></div></div>
+<div class="pair" style="margin-top:4px"><div><label for="decimals">Decimals</label><input id="decimals" type="number" min="0" max="8" value="3"></div><div><button id="auto" type="button">Reset scale</button></div></div>
+<div class="check-row"><label><input type="checkbox" id="showScale" checked> Show scale</label><label><input type="checkbox" id="lit"> Shading</label></div>
+</section>
+<section><h2>Geometry &amp; slice</h2><label for="body">Surface group</label><select id="body"><option value="0">All surfaces</option></select>
+<div class="pair"><div><label for="explode">Explode <span id="explodeValue">0×</span></label><input id="explode" type="range" min="0" max="30" step=".1" value="0"></div><div><label for="stretch">Z stretch <span id="stretchValue">1×</span></label><input id="stretch" type="range" min="1" max="40" step=".1" value="1"></div></div>
+<div class="pair"><div><label for="zmin">Min Z (mm)</label><input id="zmin" type="number" step=".01"></div><div><label for="zmax">Max Z (mm)</label><input id="zmax" type="number" step=".01"></div></div></section>
+<section><h2>Camera &amp; export</h2><div class="buttons"><button id="top" type="button">Top</button><button id="iso" type="button">3D</button><button id="side" type="button">Side</button></div><div class="buttons two"><button id="fit" type="button">Fit view</button><button id="reset" type="button">Reset</button></div><button id="export" type="button" style="margin-top:5px">Save image with scale</button></section>
+
+<details><summary>Per-pad values &amp; assumptions</summary><p id="meshInfo" class="hint"></p><p class="hint">Drag orbit · Shift/right drag pan · Scroll zoom · Keys: T, I, F, R.</p><div id="modelNotes"></div><h3>Per-pad solved values</h3><div id="padTable"></div><p id="checks" class="hint"></p></details>
+</aside><div class="viewport" id="viewport"><canvas id="scene" aria-label="Interactive 3D board viewer"></canvas><div class="floating notice" id="notice"><b id="noticeTitle">Geometry preview</b><span id="noticeText">These colours are not simulation results.</span></div><div class="floating legend" id="legend"><h3 id="legendTitle"></h3><small id="legendUnit"></small><div class="scale-layout"><div class="bar" id="bar"></div><div class="ticks" id="ticks"></div></div><p id="legendNote"></p></div><div class="floating navhint">Drag orbit · Shift drag pan · Scroll zoom</div></div></main>
+<script id="geometry" type="application/json">__BOARD_GEOMETRY__</script>
+<script>
+'use strict';
+const PACK=JSON.parse(document.getElementById('geometry').textContent);
+function unpack(text,Type){const raw=atob(text),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);return new Type(bytes.buffer);}
+const DATA={...PACK,bodies:PACK.bodies.map(body=>{const p=unpack(body.xyz,Float32Array),t=unpack(body.faces,Uint32Array);return {...body,vertices_mm:Array.from({length:p.length/3},(_,i)=>[p[i*3]+PACK.center[0],p[i*3+1]+PACK.center[1],p[i*3+2]+PACK.center[2]]),faces:Array.from({length:t.length/3},(_,i)=>[t[i*3],t[i*3+1],t[i*3+2]]),fieldValues:Object.fromEntries(Object.entries(body.fields).map(([name,value])=>[name,unpack(value,Float32Array)]))};})};
+const $=id=>document.getElementById(id);
+const fields={copper:['Copper geometry',''],voltage_V:['Voltage','V'],ir_drop_mV:['IR drop','mV'],current_density_A_mm2:['Current density - volume-weighted vertex average','A/mm\u00b2'],joule_W_mm3:['Joule generation - volume-weighted vertex average','W/mm\u00b3'],temperature_C:['Approximate temperature','\u00b0C']};
+for(const key of ['ir_drop_mV','voltage_V','current_density_A_mm2','joule_W_mm3','temperature_C','copper']){if(key!=='copper'&&!PACK.field_names.includes(key))continue;const option=document.createElement('option');option.value=key;option.textContent=fields[key].join(' - ');$('field').appendChild(option);}
+const scientific=(value,unit)=>Number(value).toLocaleString(undefined,{maximumSignificantDigits:6})+' '+unit;
+$('operatingPoint').textContent=scientific(PACK.report.input_voltage_V,'V input')+' / '+scientific(PACK.report.total_current_A,'A total');
+$('resultSummary').textContent='Resistance: '+scientific(PACK.report.resistance_ohm*1000,'m\u03a9')+'; terminal drop: '+scientific(PACK.report.terminal_drop_V*1000,'mV')+'; Joule loss: '+scientific(PACK.report.total_joule_power_W,'W')+'; output: '+scientific(PACK.report.output_voltage_V,'V');
+$('thermalNote').textContent=PACK.report.thermal_solved?'Approximate peak temperature: '+scientific(PACK.report.maximum_temperature_C,'\u00b0C')+'; limit: '+scientific(PACK.report.limit_temperature_C,'\u00b0C'):'Electrical-only result. Temperature was not calculated.';
+for(const note of PACK.notes){const row=document.createElement('p');row.className='hint';row.textContent=note;$('modelNotes').appendChild(row);}
+for(const port of PACK.report.per_pad||[]){const row=document.createElement('p');row.className='hint';row.textContent=port.name+' ('+port.role+'): '+scientific(port.current_A,'A')+', '+scientific(port.mean_voltage_V,'V')+(PACK.report.thermal_solved&&port.max_temperature_C!=null?', '+scientific(port.max_temperature_C,'\u00b0C'):'');$('padTable').appendChild(row);}
+if(PACK.report.checks)$('checks').textContent='Solver checks: '+JSON.stringify(PACK.report.checks);
+
+const palettes={rainbow:[[.35,.01,.8],[.01,.08,1],[0,.85,1],[.05,1,.08],[1,.9,0],[1,.25,0],[1,.01,.01]],neon:[[.12,0,.5],[.5,0,1],[1,0,.5],[0,.4,1],[0,1,.8],[.4,1,0],[1,1,.2]],heat:[[.01,0,.02],[.15,0,.15],[.4,0,.12],[.75,.02,.04],[1,.15,0],[1,.6,.02],[1,1,.8]],coolwarm:[[.01,.04,.5],[.04,.2,.8],[.2,.5,1],[.85,.85,.85],[1,.5,.3],[.8,.12,.08],[.5,.01,.02]],mono:[[.01,.01,.01],[.08,.08,.08],[.2,.2,.2],[.4,.4,.4],[.6,.6,.6],[.8,.8,.8],[1,1,1]]};
+let palette=palettes.rainbow;
+try{const saved=localStorage.getItem('salt-pepper-palette');if(Object.hasOwn(palettes,saved)){$('palette').value=saved;palette=palettes[saved];}const copper=localStorage.getItem('salt-pepper-copper');if(/^#[0-9a-f]{6}$/i.test(copper||''))$('copperColor').value=copper;}catch(_){}
+const stops=[0,.17,.34,.5,.67,.83,1];
+const b=DATA.bounds_mm,center=b.slice(0,3).map((v,i)=>(v+b[i+3])/2),span=Math.max(...b.slice(0,3).map((v,i)=>b[i+3]-v));
+const results=Object.fromEntries(PACK.field_names.map(name=>[name,Object.fromEntries(DATA.bodies.map(body=>[String(body.id),body.fieldValues[name]]))]));
+let yaw=-.35,pitch=.65,zoom=1,pan=[0,0],dirty=true,activeDrag=null;
+const canvas=$('scene'),gl=canvas.getContext('webgl2',{antialias:true,preserveDrawingBuffer:true});
+function themeColours(){const style=getComputedStyle(document.documentElement);return Object.fromEntries(['scene','panel','text','muted'].map(key=>[key,style.getPropertyValue('--'+key).trim()]));}
+function applyTheme(theme,persist=true){if(theme!=='salt'&&theme!=='pepper')return;document.documentElement.dataset.theme=theme;$('themeToggle').setAttribute('aria-pressed',String(theme==='pepper'));$('themeToggle').setAttribute('aria-label','Switch to '+(theme==='salt'?'Pepper':'Salt')+' theme');$('themeName').textContent=theme==='salt'?'Salt':'Pepper';if(persist)try{localStorage.setItem('salt-pepper-theme',theme);}catch(_){}dirty=true;}
+applyTheme(document.documentElement.dataset.theme,false);
+$('themeToggle').onclick=()=>applyTheme(document.documentElement.dataset.theme==='salt'?'pepper':'salt');
+window.addEventListener('storage',event=>{if(event.key==='salt-pepper-theme')applyTheme(event.newValue,false);});
+window.addEventListener('message',event=>{if(event.source!==window.parent||window.parent===window||event.origin!==location.origin)return;if(event.data?.type==='salt-pepper-theme')applyTheme(event.data.theme);});
+
+function showError(message){$('noticeTitle').textContent='Viewer error';$('noticeText').textContent=message;$('notice').classList.add('error');}
+if(!gl){showError('WebGL 2 is unavailable. Try a browser with hardware acceleration enabled.');throw Error('WebGL2 unavailable');}
+const vs=`#version 300 es
+precision highp float;
+in vec3 position;in float scalar;
+uniform mat4 viewProjection;uniform float stretch,explode,bodyZ;
+out float value;out float originalZ;out vec3 surfacePosition;
+void main(){vec3 p=position;originalZ=p.z;value=scalar;p.z=p.z*stretch+bodyZ*explode;surfacePosition=p;gl_Position=viewProjection*vec4(p,1.0);}`;
+const fs=`#version 300 es
+precision highp float;
+in float value;in float originalZ;in vec3 surfacePosition;
+uniform float minimum,maximum,zmin,zmax;uniform int mode;uniform bool available,lit;uniform vec3 colourStops[7];uniform vec3 copperColour;
+out vec4 colour;
+vec3 rainbow(float t){
+
+float s[7]=float[7](0.,.17,.34,.5,.67,.83,1.);for(int i=0;i<6;i++){if(t<=s[i+1])return mix(colourStops[i],colourStops[i+1],clamp((t-s[i])/(s[i+1]-s[i]),0.,1.));}return colourStops[6];}
+vec3 srgb(vec3 c){return mix(12.92*c,1.055*pow(max(c,vec3(0.)),vec3(1./2.4))-.055,step(vec3(.0031308),c));}
+void main(){if(originalZ<zmin||originalZ>zmax)discard;vec3 c;
+if(mode==0)c=copperColour;else if(!available||maximum<=minimum)c=vec3(.22);else c=rainbow(clamp((value-minimum)/(maximum-minimum),0.,1.));
+if(lit){vec3 n=normalize(cross(dFdx(surfacePosition),dFdy(surfacePosition)));c*=.45+.55*abs(dot(n,normalize(vec3(.3,-.4,1.))));}
+colour=vec4(srgb(c),1.);}`;
+function shader(type,source){const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s;}
+let program;
+try{program=gl.createProgram();gl.attachShader(program,shader(gl.VERTEX_SHADER,vs));gl.attachShader(program,shader(gl.FRAGMENT_SHADER,fs));gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));}catch(e){showError(e.message);throw e;}
+gl.useProgram(program);gl.enable(gl.DEPTH_TEST);
+const uniforms={};for(const key of ['viewProjection','stretch','explode','bodyZ','minimum','maximum','zmin','zmax','mode','available','lit','copperColour'])uniforms[key]=gl.getUniformLocation(program,key);
+const meshes=DATA.bodies.map(body=>{
+ const vao=gl.createVertexArray();gl.bindVertexArray(vao);
+ const positions=new Float32Array(body.vertices_mm.flatMap(v=>v.map((x,i)=>x-center[i])));
+ const pb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,pb);gl.bufferData(gl.ARRAY_BUFFER,positions,gl.STATIC_DRAW);
+ const p=gl.getAttribLocation(program,'position');gl.enableVertexAttribArray(p);gl.vertexAttribPointer(p,3,gl.FLOAT,false,0,0);
+ const sb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,sb);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(body.vertices_mm.length),gl.DYNAMIC_DRAW);
+ const a=gl.getAttribLocation(program,'scalar');gl.enableVertexAttribArray(a);gl.vertexAttribPointer(a,1,gl.FLOAT,false,0,0);
+ const indices=new Uint32Array(body.faces.flat());const ib=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ib);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,indices,gl.STATIC_DRAW);
+ const option=document.createElement('option');option.value=body.id;option.textContent=`${body.id} · ${body.name}`;$('body').appendChild(option);
+ return {body,vao,sb,count:indices.length,z:(body.bounds_mm[2]+body.bounds_mm[5])/2-center[2]};
+});
+gl.bindVertexArray(null);
+$('meshInfo').textContent=`${meshes.length} surface groups · ${meshes.reduce((n,m)=>n+m.count/3,0).toLocaleString()} surface triangles · millimetres.`;
+$('zmin').value=(b[2]-.001).toFixed(5);$('zmax').value=(b[5]+.001).toFixed(5);
+function preview(){return false;}
+function hasData(){return Object.hasOwn(results,$('field').value);}
+function samples(mesh){return results[$('field').value]?.[String(mesh.body.id)]??new Float32Array(mesh.body.vertices_mm.length);}
+function updateField(fit=true){for(const mesh of meshes){gl.bindBuffer(gl.ARRAY_BUFFER,mesh.sb);gl.bufferSubData(gl.ARRAY_BUFFER,0,new Float32Array(samples(mesh)));}if(fit)autoScale();updateLegend();dirty=true;}
+function autoScale(){const range=PACK.ranges[$('field').value]||[0,1];$('minimum').value=range[0];$('maximum').value=range[1];}
+function fmt(v){const decimals=Math.min(8,Math.max(0,Number($('decimals').value)||0));return v!==0&&(Math.abs(v)<10**(-decimals)||Math.abs(v)>=1e6)?v.toExponential(2):v.toFixed(decimals);}
+function srgb(c){return c<=.0031308?12.92*c:1.055*c**(1/2.4)-.055;}
+function css(c){return `rgb(${c.map(v=>Math.round(255*srgb(v))).join(',')})`;}
+function updateLegend(){
+ const key=$('field').value,[name,unit]=fields[key],isCopper=key==='copper',valid=Number.isFinite(+$('minimum').value)&&Number.isFinite(+$('maximum').value)&&+$('maximum').value>+$('minimum').value;
+ const available=hasData();$('legend').hidden=!$('showScale').checked||isCopper;
+ $('legendTitle').textContent=name;$('legendUnit').textContent=unit;
+ $('bar').style.background=available&&valid?`linear-gradient(${matchMedia('(max-width:760px)').matches?'90deg':'0deg'},${palette.map((c,i)=>`${css(c)} ${stops[i]*100}%`).join(',')})`:'#818181';
+ $('ticks').replaceChildren();for(let i=0;i<5;i++){const tick=document.createElement('span');tick.textContent=fmt(+$('minimum').value+(+$('maximum').value-+$('minimum').value)*i/4);$('ticks').append(tick);}
+ const status=isCopper?'Geometry only':!valid?'Invalid scale: maximum must exceed minimum.':!available?'NO DATA — this field has not been solved.':preview()?'GEOMETRY PREVIEW — NOT SIMULATED':(PACK.report.thermal_solved?'Solved fields - temperature model is approximate':'Solved electrical fields');
+ $('fieldStatus').textContent=status;$('noticeTitle').textContent=isCopper?'Copper geometry':preview()?'Geometry preview':available?'Solved simulation field':'No simulation data';$('noticeText').textContent=status;
+ $('legendNote').textContent=!valid?'Invalid scale range':!available?'NO DATA · grey does not mean zero':preview()?'Normalized geometry colours · not simulated':(['current_density_A_mm2','joule_W_mm3'].includes(key)?'Volume-weighted vertex average; corner peaks depend on mesh':'Nodal FEM values; values outside range use end colours');
+ if($('lit').checked)$('legendNote').textContent+=' · shading affects surface colours';
+ dirty=true;
+}
+function matrix(aspect){
+ const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
+ const half=span*.67/zoom,sx=1/(half*aspect),syScale=1/half,sz=-1/(span*500);
+ return new Float32Array([sx*cy,syScale*sp*sy,-sz*cp*sy,0,-sx*sy,syScale*sp*cy,-sz*cp*cy,0,0,syScale*cp,sz*sp,0,pan[0],pan[1],0,1]);
+}
+function render(){requestAnimationFrame(render);if(!dirty)return;dirty=false;
+ const rect=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2),w=Math.max(1,Math.round(rect.width*dpr)),h=Math.max(1,Math.round(rect.height*dpr));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}gl.viewport(0,0,w,h);const background=themeColours().scene;gl.clearColor(...[1,3,5].map(i=>parseInt(background.slice(i,i+2),16)/255),1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+ gl.useProgram(program);gl.uniform3fv(gl.getUniformLocation(program,'colourStops[0]'),palette.flat());
+ const colour=$('copperColor').value;gl.uniform3fv(uniforms.copperColour,[1,3,5].map(i=>{const c=parseInt(colour.slice(i,i+2),16)/255;return c<=.04045?c/12.92:((c+.055)/1.055)**2.4;}));
+ gl.uniformMatrix4fv(uniforms.viewProjection,false,matrix(w/h));
+ for(const [key,value] of Object.entries({minimum:+$('minimum').value,maximum:+$('maximum').value,zmin:+$('zmin').value-center[2],zmax:+$('zmax').value-center[2],stretch:+$('stretch').value,explode:+$('explode').value}))gl.uniform1f(uniforms[key],Number.isFinite(value)?value:0);
+ gl.uniform1i(uniforms.mode,$('field').value==='copper'?0:1);gl.uniform1i(uniforms.available,hasData()?1:0);gl.uniform1i(uniforms.lit,$('lit').checked?1:0);
+ for(const mesh of meshes){if(+$('body').value&&+$('body').value!==mesh.body.id)continue;gl.uniform1f(uniforms.bodyZ,mesh.z);gl.bindVertexArray(mesh.vao);gl.drawElements(gl.TRIANGLES,mesh.count,gl.UNSIGNED_INT,0);}gl.bindVertexArray(null);
+}
+function fit(){pan=[0,0];const rect=canvas.getBoundingClientRect(),aspect=rect.width/Math.max(1,rect.height);let extent=0;const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);for(const m of meshes){if(+$('body').value&&+$('body').value!==m.body.id)continue;for(let j=0;j<8;j++){const x=m.body.bounds_mm[(j&1)?3:0]-center[0],y=m.body.bounds_mm[(j&2)?4:1]-center[1],z=(m.body.bounds_mm[(j&4)?5:2]-center[2])*(+$('stretch').value)+m.z*(+$('explode').value);extent=Math.max(extent,Math.abs(cy*x-sy*y)/Math.max(aspect,.01),Math.abs(sp*sy*x+sp*cy*y+cp*z));}}zoom=span*.60/Math.max(extent,.001);dirty=true;}
+function reset(){yaw=-.35;pitch=.65;$('explode').value=0;$('stretch').value=1;$('body').value=0;$('zmin').value=(b[2]-.001).toFixed(5);$('zmax').value=(b[5]+.001).toFixed(5);updateTransform();fit();}
+function updateTransform(){$('explodeValue').textContent=$('explode').value+'×';$('stretchValue').textContent=$('stretch').value+'×';dirty=true;}
+$('palette').onchange=()=>{palette=palettes[$('palette').value];try{localStorage.setItem('salt-pepper-palette',$('palette').value);}catch(_){}updateLegend();};
+$('copperColor').oninput=()=>{try{localStorage.setItem('salt-pepper-copper',$('copperColor').value);}catch(_){}dirty=true;};
+$('field').onchange=()=>updateField();$('auto').onclick=()=>{autoScale();updateLegend();};
+for(const id of ['minimum','maximum','decimals','showScale','lit'])$(id).oninput=updateLegend;
+for(const id of ['body','zmin','zmax'])$(id).oninput=()=>{dirty=true;};
+for(const id of ['explode','stretch'])$(id).oninput=updateTransform;
+$('top').onclick=()=>{yaw=0;pitch=Math.PI/2;fit();};$('side').onclick=()=>{yaw=0;pitch=0;fit();};$('iso').onclick=()=>{yaw=-.35;pitch=.65;fit();};$('fit').onclick=fit;$('reset').onclick=reset;
+canvas.onpointerdown=e=>{canvas.setPointerCapture(e.pointerId);activeDrag={x:e.clientX,y:e.clientY,pan:e.shiftKey||e.button===2};};
+canvas.onpointermove=e=>{if(!activeDrag)return;const dx=e.clientX-activeDrag.x,dy=e.clientY-activeDrag.y;if(activeDrag.pan){const r=canvas.getBoundingClientRect();pan[0]+=2*dx/r.width;pan[1]-=2*dy/r.height;}else{yaw+=dx*.008;pitch=Math.max(-Math.PI/2,Math.min(Math.PI/2,pitch+dy*.008));}activeDrag.x=e.clientX;activeDrag.y=e.clientY;dirty=true;};
+canvas.onpointerup=canvas.onpointercancel=()=>{activeDrag=null;};canvas.oncontextmenu=e=>e.preventDefault();canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(.002,Math.min(10000,zoom*Math.exp(-e.deltaY*.001)));dirty=true;},{passive:false});
+document.addEventListener('keydown',e=>{if(/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))return;const actions={t:'top',i:'iso',f:'fit',r:'reset'};if(actions[e.key.toLowerCase()])$(actions[e.key.toLowerCase()]).click();});
+new ResizeObserver(()=>{dirty=true;}).observe(canvas);matchMedia('(max-width:760px)').addEventListener('change',updateLegend);
+$('export').onclick=()=>{dirty=true;requestAnimationFrame(()=>requestAnimationFrame(()=>{
+ const c=document.createElement('canvas');c.width=canvas.width;c.height=canvas.height;const ctx=c.getContext('2d'),theme=themeColours();ctx.fillStyle=theme.scene;ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(canvas,0,0);const scale=c.width/Math.max(canvas.clientWidth,1);ctx.scale(scale,scale);const w=canvas.clientWidth,h=canvas.clientHeight;ctx.fillStyle=theme.panel;ctx.fillRect(12,12,Math.min(w-24,480),62);ctx.fillStyle=theme.text;ctx.font='bold 13px system-ui';ctx.fillText($('noticeTitle').textContent,24,35);ctx.font='11px system-ui';ctx.fillText($('noticeText').textContent,24,57,Math.max(1,w-48));
+ if(!$('legend').hidden){const lw=Math.min(265,w-24),x=w-lw-12,y=h-135;ctx.fillStyle=theme.panel;ctx.fillRect(x,y,lw,123);ctx.fillStyle=theme.text;ctx.font='bold 12px system-ui';ctx.fillText($('legendTitle').textContent+' ['+$('legendUnit').textContent+']',x+10,y+20,lw-20);const gradient=ctx.createLinearGradient(x+10,0,x+lw-10,0);palette.forEach((c,i)=>gradient.addColorStop(stops[i],css(c)));ctx.fillStyle=hasData()&&+$('maximum').value>+$('minimum').value?gradient:'#818181';ctx.fillRect(x+10,y+33,lw-20,14);ctx.fillStyle=theme.text;ctx.font='10px system-ui';for(let i=0;i<5;i++){ctx.textAlign=i===0?'left':i===4?'right':'center';ctx.fillText(fmt(+$('minimum').value+(+$('maximum').value-+$('minimum').value)*i/4),x+10+(lw-20)*i/4,y+64);}ctx.textAlign='left';ctx.fillStyle=theme.muted;ctx.fillText($('legendNote').textContent,x+10,y+88,lw-20);}
+ ctx.fillStyle=theme.muted;ctx.font='11px system-ui';ctx.fillText('Salt and Pepper | '+$('operatingPoint').textContent,20,h-15);c.toBlob(blob=>{if(!blob)return;const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='PCB_'+$('field').value+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
+ }));};
+canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();showError('Graphics context lost. Reload the page to restore the viewer.');});
+window.PCB3D={report:PACK.report,bodies:DATA.bodies.map(b=>({id:b.id,name:b.name,vertices:b.vertices_mm.length,triangles:b.faces.length})),get field(){return $('field').value;},get theme(){return document.documentElement.dataset.theme;},fieldNames:PACK.field_names};
+updateField();fit();render();document.body.dataset.viewerStatus='ready';
+</script></body></html>
