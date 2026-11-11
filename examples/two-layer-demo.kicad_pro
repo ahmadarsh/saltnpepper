@@ -1,0 +1,28 @@
+{
+  "meta": {
+    "filename": "two-layer-demo.kicad_pro",
+    "version": 1
+  },
+  "net_settings": {
+    "classes": [
+      {
+        "name": "Default",
+        "priority": 2147483647,
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "schematic_color": "rgba(0, 0, 0, 0.000)",
+        "clearance": 0.2,
+        "track_width": 1.0,
+        "via_diameter": 1.4,
+        "via_drill": 0.6
+      }
+    ],
+    "meta": {
+      "version": 5
+    },
+    "net_colors": {
+      "DEMO_POWER": "rgb(255, 154, 48)"
+    },
+    "netclass_assignments": {},
+    "netclass_patterns": []
+  }
+}

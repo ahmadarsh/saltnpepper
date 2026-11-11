@@ -17,10 +17,26 @@ def main():
         write(job/'progress.json',dict(stage=stage,message=message,time=time.time(),**extra))
         print(f'[{stage}] {message}',flush=True)
     try:
-        from pcb_simulator.engine import inspect_model,run_simulation
-        if request['operation']=='inspect':
+        if request['operation'].startswith('kicad_'):
+            from pcb_simulator import kicad_preview
+            op=request['operation']
+            if op=='kicad_inspect':result=kicad_preview.inspect_board(request['source'],output,emit)
+            elif op=='kicad_net':result=kicad_preview.select_net(request['source'],output,request['net'],emit)
+            elif op=='kicad_prepare':
+                result=kicad_preview.prepare(request['source'],output,request['net'],request['input_ids'],request['output_ids'],emit)
+                if request.get('workbench_dir'):
+                    from pcb_simulator.kicad_workbench import promote_to_workbench
+                    board=json.loads(Path(request['board_file']).read_text(encoding='utf-8'))
+                    promote_to_workbench(output/'copper.xao',Path(request['workbench_dir']),board,request['net'],result['terminals'],emit)
+                    result['solver_connected']=True
+                    result['message']='Selected copper is ready in the Geometry workbench.'
+                    write(output/'handoff.json',result)
+            else:raise ValueError('Unknown KiCad job.')
+        elif request['operation']=='inspect':
+            from pcb_simulator.engine import inspect_model
             result=inspect_model(Path(request['source']),output,emit)
         elif request['operation']=='simulate':
+            from pcb_simulator.engine import run_simulation
             inventory=json.loads(Path(request['inventory']).read_text(encoding='utf-8'))
             report=run_simulation(Path(request['source']),inventory,output,request['input_tags'],request['output_tags'],request['parameters'],emit)
             emit('postprocessing','Building the interactive result viewer and downloads.')

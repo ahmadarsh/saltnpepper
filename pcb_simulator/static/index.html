@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <div id="welcome" class="welcome" role="dialog" aria-label="Salt and Pepper introduction">
+  <div id="welcome" class="welcome dismissed" role="dialog" aria-label="Salt and Pepper introduction" aria-hidden="true">
     <button id="skipWelcome" class="skip">Skip intro</button>
     <div class="welcome-inner">
       <svg class="shakers" viewBox="0 0 68 56" fill="none" aria-hidden="true">
@@ -36,7 +36,7 @@
   </div>
 
   <header class="topbar">
-    <a class="brand" href="#setup" aria-label="Salt and Pepper setup">
+    <a class="brand" href="#home" aria-label="Salt and Pepper setup">
       <svg class="shakers" viewBox="0 0 68 56" fill="none" aria-hidden="true">
         <g class="shaker-one">
           <path d="M9 17h19l3 28a5 5 0 0 1-5 5H11a5 5 0 0 1-5-5L9 17Z" fill="currentColor" opacity=".16" stroke="currentColor" stroke-width="2"/>
@@ -63,12 +63,25 @@
     </a>
 
     <nav class="main-nav" aria-label="Main navigation">
+      <a href="#home" data-nav="home">Home</a>
+      <a href="#kicad" data-nav="kicad">KiCad import</a>
       <a href="#setup" data-nav="setup"><span class="nav-idx">01</span>Setup</a>
       <a href="#runs" data-nav="runs"><span class="nav-idx">02</span>Runs<span id="runsBadge" class="nav-badge" hidden>0</span></a>
       <a href="#results" data-nav="results"><span class="nav-idx">03</span>Results</a>
     </nav>
 
     <div class="topright">
+      <details id="workspaceMenu" class="adv-popover">
+        <summary class="button secondary compact-btn" title="Workspace files">Workspace ▾</summary>
+        <div class="adv-popover-panel" style="top:calc(100% + 8px);bottom:auto;width:220px;display:grid;gap:6px;padding:10px;">
+          <small id="workspaceMenuName" class="muted">No workspace open</small>
+          <button id="workspaceNew" class="button secondary compact-btn" type="button">New workspace</button>
+          <button id="workspaceOpen" class="button secondary compact-btn" type="button">Open workspace…</button>
+          <button id="workspaceAdd" class="button secondary compact-btn" type="button">Add board…</button>
+          <button id="workspaceSave" class="button primary compact-btn" type="button" disabled>Save workspace</button>
+          <button id="workspaceSaveAs" class="button secondary compact-btn" type="button" disabled>Save workspace as…</button>
+        </div>
+      </details>
       <button id="example" class="button secondary compact-btn" type="button" title="Import and load the supplied copper bar example">
         Load example model <span>&#8599;</span>
       </button>
@@ -83,6 +96,52 @@
   </header>
 
   <main class="cad-main">
+    <section id="homeView" class="page-view mode-home" hidden>
+      <div class="home-inner">
+        <span class="prototype-pill">V0.9 · MAC PREVIEW</span>
+        <h1>Your board.<br><span>Your workspace.</span></h1>
+        <p class="home-lead">Start fresh or continue from a saved .pepper workspace.</p>
+        <div class="mode-cards">
+          <a id="newWorkspaceCard" class="mode-card" href="#setup"><span class="mode-symbol">＋</span><span class="mode-kicker">START FRESH</span><h2>New workspace <span>↗</span></h2><p>Begin with an empty workbench, then add a KiCad board or STEP geometry.</p><small>No previous board is loaded</small></a>
+          <a id="openWorkspaceCard" class="mode-card kicad-card" href="#home"><span class="mode-symbol">↥</span><span class="mode-kicker">CONTINUE YOUR WORK</span><h2>Open workspace <span>↗</span></h2><p>Restore your board, selections, simulation settings and saved results from a .pepper file.</p><small>Choose a .pepper workspace</small></a>
+        </div>
+        <p class="home-foot">Local files. Save a named .pepper workspace whenever you want to continue later.</p>
+      </div>
+    </section>
+    <section id="kicadView" class="page-view kicad-view" hidden>
+      <div class="kc-heading"><div><span class="prototype-pill">V0.9 · MAC PREVIEW</span><h1>Board selection</h1></div><div class="kc-heading-actions"><span id="kcRuntime" class="status">Checking KiCad…</span><a class="button secondary" href="#home">Change mode</a></div></div>
+      <div class="kc-workspace-tabs" role="tablist" aria-label="KiCad workspace"><button id="kcSelectionTab" type="button" role="tab" aria-selected="true" aria-controls="kcSelectionPanel">Board selection</button><button id="kcDetailsTab" type="button" role="tab" aria-selected="false" aria-controls="kcDetailsPanel">Import details</button></div>
+      <div id="kcDetailsPanel" class="panel kc-details-panel" role="tabpanel" aria-labelledby="kcDetailsTab" hidden><div id="kcDetails"><p class="muted">Import a board to inspect its pads, nets and stackup.</p></div></div>
+      <div id="kcSelectionPanel" class="kc-layout" role="tabpanel" aria-labelledby="kcSelectionTab">
+        <aside class="panel kc-left">
+          <div class="panel-head"><h2>01 · Board & nets</h2></div>
+          <label class="dropzone kc-upload" id="kcDrop" tabindex="0"><input id="kcFile" type="file" accept=".kicad_pcb,.kicad_pro" multiple hidden><span class="upload-icon">↑</span><strong>Import KiCad PCB</strong><small>PCB + optional project file</small></label>
+          <button id="kcDemo" type="button" class="button secondary kc-demo">Try the example board ↗</button>
+          <a id="kcDownloadExample" class="kc-example-download" href="/api/kicad/example-project.zip" download hidden>Download USB-UART project ↧</a>
+          <label class="kc-project-button">Import KiCad colours (.kicad_pro)<input id="kcProjectFile" type="file" accept=".kicad_pro" hidden></label><div class="kc-board-name" id="kcBoardName">No board selected</div><div id="kcImportTiming" class="kc-import-timing" hidden></div>
+          <label class="kc-search-label" for="kcNetSearch">Net names</label><input id="kcNetSearch" placeholder="Search nets…" autocomplete="off">
+          <div id="kcNets" class="kc-net-list"><p class="muted">Import a board to list its nets.</p></div>
+        </aside>
+        <section class="kc-center">
+          <div class="panel kc-tools"><div><strong id="kcNetName">Select a net</strong><small id="kcNetInfo">Copper on all required layers is retained for export.</small></div><div class="kc-role-toggle" role="group" aria-label="Pad assignment tool"><button id="kcPickInput" type="button" aria-pressed="true">● Input</button><button id="kcPickOutput" type="button" aria-pressed="false">● Output</button><button id="kcAllNets" type="button" aria-pressed="true">All colours</button><button id="kcLayout" type="button">Side by side</button><button id="kcFocus" type="button" aria-pressed="false">Focus board</button><button id="kcFit" type="button">Fit</button></div></div>
+          <div class="kc-layer-grid">
+            <div class="panel kc-layer"><div class="kc-layer-head"><strong>Top copper</strong><span>F.Cu</span></div><svg id="kcTop" class="kc-board-svg" role="img" aria-label="Interactive top copper layer"></svg><div class="kc-layer-footer">Click a pad to assign · Scroll to zoom · Drag to pan</div></div>
+            <div class="panel kc-layer"><div class="kc-layer-head"><strong>Bottom copper</strong><span>B.Cu · mirrored</span></div><svg id="kcBottom" class="kc-board-svg" role="img" aria-label="Interactive bottom copper layer"></svg><div class="kc-layer-footer">Same pad identities · View from the underside</div></div>
+          </div>
+          <div id="kcProgress" class="kc-progress" role="status">Import a KiCad board or try the example to begin.</div>
+          <details class="panel kc-pad-panel"><summary>Pad list · alternative selection</summary><div class="kc-pad-head"><h2>Pads on selected net</h2><input id="kcPadSearch" placeholder="Find reference or pad…" aria-label="Search pads"></div><div id="kcPads" class="kc-pad-list"><p class="muted">Real component and pad names will appear here.</p></div></details>
+        </section>
+        <aside class="panel kc-right"><div class="panel-head"><h2>02 · Terminals</h2></div>
+          <p class="kc-terminal-help">Select pads on either layer, or use the pad list.</p>
+          <div class="kc-terminal-box input"><strong>● Input pads</strong><div id="kcInputs">None selected</div></div>
+          <div class="kc-terminal-box output"><strong>● Output pads</strong><div id="kcOutputs">None selected</div></div>
+          <button id="kcClear" class="text-button" type="button">Clear terminals</button>
+          <div class="kc-export-summary"><h3>03 · Geometry handoff</h3><p>Prepare this net’s copper, inner layers and vias with named electrode surfaces.</p><button id="kcPrepare" class="button primary" type="button" disabled>Prepare selected copper →</button><small class="kc-prototype-note">Opens the Geometry workbench with these pad selections. Your simulation settings are retained.</small></div>
+          <div id="kcHandoff" class="kc-handoff" hidden></div>
+        </aside>
+      </div>
+    </section>
+
     <!-- 01: SETUP VIEW (FIT-TO-WINDOW CAD WORKBENCH) -->
     <div id="setupView" class="page-view setup-view">
       <div class="cad-workspace">
@@ -100,6 +159,7 @@
               <button id="refreshModels" class="icon-btn" type="button" title="Refresh models">↻</button>
             </div>
             <div class="models-body">
+              <button id="setupKiCadImport" class="button secondary" type="button">Import KiCad PCB…</button>
               <label id="dropzone" class="dropzone" tabindex="0">
                 <input id="file" type="file" accept=".step,.stp" hidden>
                 <span class="upload-icon">↑</span>
@@ -458,7 +518,31 @@
       <div class="dialog-actions"><button id="cancelDelete" value="cancel" type="submit">Cancel</button><button id="confirmDelete" class="danger" value="delete" type="submit">Delete</button></div>
     </form>
   </dialog>
+  <input id="addWorkspaceBoardFile" type="file" accept=".kicad_pcb,.step,.stp" hidden>
+  <input id="openWorkspaceFile" type="file" accept=".pepper" hidden>
+  <dialog id="saveWorkspaceDialog" aria-labelledby="saveWorkspaceTitle" style="max-width:440px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);padding:24px;">
+    <form id="saveWorkspaceForm">
+      <h2 id="saveWorkspaceTitle">Save workspace</h2>
+      <p class="muted">Board, selections, settings and results are saved in one .pepper file.</p>
+      <label for="workspaceFileName">Workspace name</label>
+      <input id="workspaceFileName" name="workspaceName" maxlength="80" required autocomplete="off" style="display:block;width:100%;margin:8px 0 14px;padding:9px;border:1px solid var(--line);border-radius:6px;background:var(--input);color:var(--text);">
+      <p id="workspaceSaveError" role="alert" style="color:var(--danger);" hidden></p>
+      <div class="dialog-actions"><button id="cancelSaveWorkspace" class="button secondary" type="button">Cancel</button><button id="confirmSaveWorkspace" class="button primary" type="submit">Download .pepper</button></div>
+    </form>
+  </dialog>
   <div id="toast" role="status"></div>
+  <dialog id="kcGeometryDialog" class="kc-geometry-dialog" aria-labelledby="kcGeometryTitle">
+    <div class="kc-geometry-heading"><div><span class="prototype-pill">GEOMETRY REVIEW</span><h2 id="kcGeometryTitle">Selected net · 3D copper</h2></div><button id="kcGeometryClose" type="button" class="button secondary">Back to pads ×</button></div>
+    <div class="kc-geometry-tools"><span>Drag to orbit · Shift-drag to pan · Scroll to zoom</span><div><button id="kcGeometryTop" type="button">Top</button><button id="kcGeometryBottom" type="button">Bottom</button><button id="kcGeometryIso" type="button">3D</button><button id="kcGeometryFit" type="button">Fit</button></div></div>
+    <div class="kc-geometry-stage"><canvas id="kcGeometryCanvas" aria-label="Prepared selected-net copper geometry"></canvas><div class="kc-geometry-legend"><span class="input">● Input electrode</span><span class="output">● Output electrode</span><span>● Copper</span></div></div>
+    <div id="kcGeometrySummary" class="kc-geometry-summary"></div>
+    <p class="kc-geometry-note">Geometry review · Actual copper solids and named electrode surfaces. Simulation launch is the next integration stage.</p>
+  </dialog>
   <script src="/app.js"></script>
+  <script src="/workspace.js"></script>
+  <script src="/kicad-geometry.js"></script>
+  <script src="/kicad-stackup.js"></script>
+  <script src="/kicad-details.js"></script>
+  <script src="/kicad.js"></script>
 </body>
 </html>

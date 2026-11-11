@@ -1,5 +1,8 @@
 {
   "bundle": {
+    "resources": {
+      "../kicad-runtime/": "kicad/"
+    },
     "targets": [
       "nsis"
     ],

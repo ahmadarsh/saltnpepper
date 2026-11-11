@@ -4,6 +4,7 @@ The application bundles native dependencies; the project licence does not replac
 
 | Component | Licence / source |
 | --- | --- |
+| KiCad 10.0.0 PCB export runtime (Mac V0.9) | GPL-3.0-or-later; [matching source](https://gitlab.com/kicad/code/kicad/-/tree/10.0.0), bundled upstream notices under `Contents/Resources/kicad/Contents/Resources/Licenses`; dependency manifest in `kicad/manifest.json` |
 | Gmsh 4.15.2 | GPL-2.0-or-later with library-linking exception; [source archive](https://gmsh.info/src/gmsh-4.15.2-source.tgz), desktop/licenses/Gmsh-LICENSE.txt |
 | OpenCASCADE, used by Gmsh | LGPL-2.1 with additional exception; [upstream](https://dev.opencascade.org/resources/licensing), release-specific source/build information in Gmsh |
 | NumPy | BSD; [source](https://github.com/numpy/numpy), included package notices |

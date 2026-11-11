@@ -1,7 +1,0 @@
-- [Home](Home)
-- [Setup](Setup)
-- [Prepare geometry from KiCad](Prepare-geometry)
-- [First simulation](First-simulation)
-- [Solver](Solver)
-- [Building releases](Building-releases)
-- [Troubleshooting](Troubleshooting)

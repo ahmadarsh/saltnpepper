@@ -17,6 +17,7 @@ import shutil
 import subprocess
 import sys
 import threading
+import tempfile
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, quote, unquote, urlsplit
@@ -26,6 +27,7 @@ import webbrowser
 
 APP=Path(__file__).resolve().parent
 ROOT=APP.parent
+if str(ROOT) not in sys.path:sys.path.insert(0,str(ROOT))
 DATA=APP/'data'
 MAX_UPLOAD=512*1024*1024
 ID=re.compile(r'^[a-f0-9]{32}$')
@@ -227,13 +229,15 @@ def artifacts(run_id):
     return rows
 
 def validate_selection(data,inventory):
-    known={int(v['tag']) for v in inventory.get('solids',[])}
+    rows={int(v['tag']):v for v in inventory.get('solids',[])};known=set(rows)
     groups=[]
     for key in ('input_tags','output_tags'):
         raw=data.get(key)
         if not isinstance(raw,list) or not raw or any(type(v) is not int for v in raw):raise ValueError('Choose at least one input pad and one output pad.')
         group=sorted(set(raw))
         if not set(group)<=known:raise ValueError('A selected pad does not belong to this imported model.')
+        group=sorted({rows[tag].get('kicad_pad_tag',tag) for tag in group})
+        if not set(group)<=known:raise ValueError('A pad refers to missing copper solids; import it again.')
         groups.append(group)
     if set(groups[0])&set(groups[1]):raise ValueError('The same pad cannot be both input and output.')
     return groups
@@ -276,6 +280,10 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as exc:self.send_json(dict(error=str(exc)),500)
     def post(self):
         route=urlsplit(self.path);parts=route.path.strip('/').split('/')
+        if route.path in ('/api/workspace/export','/api/workspace/import','/api/workspace/save-native','/api/workspace/open-native'):
+            return self.workspace_post(route)
+        if route.path.startswith('/api/kicad/'):
+            return self.kicad_post(route,parts)
         if route.path=='/api/shutdown':
             value=self.body_json()
             if not hmac.compare_digest(str(value.get('token','')),self.server.control_token):
@@ -320,16 +328,148 @@ class Handler(BaseHTTPRequestHandler):
             for name,value in params.items():
                 if isinstance(value,(int,float)) and not isinstance(value,bool) and not math.isfinite(value):raise ValueError(f'{name} must be finite.')
             key=uuid.uuid4().hex;folder=DATA/'runs'/key;folder.mkdir()
-            request=dict(operation='simulate',source=str(DATA/'models'/model_id/'source.step'),inventory=str(DATA/'models'/model_id/'inventory.json'),
+            source_file='source.xao' if model.get('source_file')=='source.xao' else 'source.step'
+            request=dict(operation='simulate',source=str(DATA/'models'/model_id/source_file),inventory=str(DATA/'models'/model_id/'inventory.json'),
                 output_dir=str(folder),input_tags=source_tags,output_tags=output_tags,parameters=params)
             write_json(folder/'config.json',dict(model_id=model_id,filename=model.get('filename'),input_tags=source_tags,output_tags=output_tags,parameters=params))
             job=self.workbench.submit('simulation',request,model_id=model_id,run_id=key)
-            write_json(folder/'meta.json',dict(id=key,model_id=model_id,filename=model.get('filename'),job_id=job['id'],status='queued',created_at=time.time()))
+            write_json(folder/'meta.json',dict(id=key,model_id=model_id,board_id=model.get('board_id'),filename=model.get('filename'),job_id=job['id'],status='queued',created_at=time.time()))
             self.send_json(dict(run_id=key,job_id=job['id']),202);return
         if len(parts)==4 and parts[:2]==['api','jobs'] and parts[3]=='cancel':
             job=self.workbench.cancel(parts[2])
             self.send_json(job if job else dict(error='Job not found.'),200 if job else 404);return
         self.send_json(dict(error='Endpoint not found.'),404)
+
+    def workspace_post(self,route):
+        from pcb_simulator.workspace_archive import export_workspace,import_workspace
+        if route.path.endswith(('/save-native','/open-native')):
+            if not getattr(self.server,'native_workspace_save',False):
+                self.send_json(dict(error='Native workspace saving is not enabled for this server.'),403);return
+            from pcb_simulator.windows_workspace import save_workspace,open_workspace
+            value=self.body_json()
+            lock=self.server.workspace_save_lock
+            if not lock.acquire(blocking=False):
+                self.send_json(dict(error='A workspace Save dialog is already open.'),409);return
+            try:
+                files=getattr(self.server,'workspace_files',{})
+                token=value.get('file_token')
+                if token is not None and (not isinstance(token,str) or token not in files):
+                    self.send_json(dict(error='Reopen this workspace before saving to its original file.'),409);return
+                if route.path.endswith('/open-native'):
+                    result=open_workspace(DATA,owner_pid=self.server.desktop_parent,previous_path=getattr(self.server,'last_workspace_path',None))
+                else:
+                    result=save_workspace(DATA,value,owner_pid=self.server.desktop_parent,
+                        previous_path=getattr(self.server,'last_workspace_path',None),existing_path=files.get(token),save_as=value.get('save_as') is True)
+                if result['status'] in ('saved','opened'):
+                    if not token or value.get('save_as') or result['status']=='opened':token=uuid.uuid4().hex
+                    files[token]=result['path'];self.server.workspace_files=files
+                    self.server.last_workspace_path=result['path'];result['native_file_token']=token
+                self.send_json(result)
+            finally:lock.release()
+            return
+        with tempfile.TemporaryDirectory(prefix='.workspace-transfer-',dir=DATA) as temporary:
+            folder=Path(temporary)
+            if route.path.endswith('/export'):
+                value=self.body_json()
+                result=export_workspace(DATA,board_id=value.get('board_id'),model_id=value.get('model_id'),name=value.get('name','Workspace'),ui_state=value.get('ui_state',{}),outputpath=folder/'workspace.pepper')
+                # Serve the requested safe filename rather than the staging name.
+                archive=folder/result['suggested_filename'];Path(result['path']).replace(archive)
+                self.file(archive,attachment=True);return
+            filename=parse_qs(route.query).get('filename',['workspace.pepper'])[0]
+            if Path(filename).suffix.lower()!='.pepper':raise ValueError('Choose a .pepper workspace file.')
+            length=int(self.headers.get('Content-Length','0'))
+            if not 0<length<=2*1024**3:raise ValueError('Choose a workspace smaller than 2 GiB.')
+            archive=folder/'workspace.pepper';remaining=length
+            with archive.open('wb') as stream:
+                while remaining:
+                    chunk=self.rfile.read(min(1024**2,remaining))
+                    if not chunk:raise ValueError('The workspace upload was incomplete.')
+                    stream.write(chunk);remaining-=len(chunk)
+            self.send_json(import_workspace(DATA,archive))
+
+    def kicad_post(self,route,parts):
+        base=DATA/'boards';base.mkdir(exist_ok=True)
+        if route.path=='/api/kicad/boards':
+            filename=parse_qs(route.query).get('filename',['board.kicad_pcb'])[0].replace('\\','/').split('/')[-1]
+            if Path(filename).suffix.lower()!='.kicad_pcb':raise ValueError('Choose a .kicad_pcb file.')
+            length=int(self.headers.get('Content-Length','0'))
+            if not 0<length<=16*1024*1024:raise ValueError('Choose a board smaller than 16 MiB for this prototype.')
+            raw=self.rfile.read(length)
+            if len(raw)!=length:raise ValueError('The board upload was incomplete.')
+            if not raw.lstrip().startswith(b'(kicad_pcb'):raise ValueError('This is not a KiCad PCB file.')
+            key=uuid.uuid4().hex;folder=base/key;folder.mkdir()
+            (folder/'source.kicad_pcb').write_bytes(raw)
+            job=self.workbench.submit('kicad_import',dict(operation='kicad_inspect',source=str(folder/'source.kicad_pcb'),output_dir=str(folder)),board_id=key)
+            write_json(folder/'meta.json',dict(id=key,filename=filename,job_id=job['id'],created_at=time.time()))
+            self.send_json(dict(board_id=key,job_id=job['id']),202);return
+        if len(parts)==5 and parts[:3]==['api','kicad','boards'] and ID.fullmatch(parts[3]) and parts[4]=='colours':
+            folder=base/parts[3];board=read_json(folder/'board.json')
+            if not board:raise ValueError('Import a board before its project colours.')
+            from pcb_simulator.kicad_preview import project_colours
+            project=self.body_json();count=project_colours(board,project)
+            write_json(folder/'project.kicad_pro',project)
+            write_json(folder/'board.json',board)
+            self.send_json(dict(board=board,imported=count));return
+        if len(parts)==5 and parts[:3]==['api','kicad','boards'] and ID.fullmatch(parts[3]) and parts[4] in ('select','prepare'):
+            folder=base/parts[3];board=read_json(folder/'board.json')
+            if not board:raise ValueError('Wait for the board import to finish.')
+            value=self.body_json();net=value.get('net')
+            if net not in {n['name'] for n in board['nets']}:raise ValueError('Choose a net from this board.')
+            key=uuid.uuid4().hex;output=folder/'exports'/key;output.mkdir(parents=True)
+            op='kicad_net' if parts[4]=='select' else 'kicad_prepare'
+            request=dict(operation=op,source=str(folder/'source.kicad_pcb'),output_dir=str(output),net=net)
+            if op=='kicad_prepare':
+                inputs=value.get('input_ids');outputs=value.get('output_ids')
+                if not isinstance(inputs,list) or not isinstance(outputs,list):raise ValueError('Choose input and output pads.')
+                request.update(input_ids=inputs,output_ids=outputs)
+                model_id=uuid.uuid4().hex;model_folder=DATA/'models'/model_id;model_folder.mkdir()
+                meta=read_json(folder/'meta.json',{})
+                write_json(model_folder/'meta.json',dict(id=model_id,board_id=parts[3],filename=meta.get('filename','KiCad board')+' · '+net,status='queued',origin='kicad',source_file='source.xao',created_at=time.time()))
+                request.update(workbench_dir=str(model_folder),board_file=str(folder/'board.json'))
+                job=self.workbench.submit('import_model',request,board_id=parts[3],model_id=model_id)
+                model_meta=read_json(model_folder/'meta.json');model_meta['job_id']=job['id'];write_json(model_folder/'meta.json',model_meta)
+                self.send_json(dict(export_id=key,job_id=job['id'],model_id=model_id),202);return
+            job=self.workbench.submit(op,request,board_id=parts[3])
+            self.send_json(dict(export_id=key,job_id=job['id']),202);return
+        self.send_json(dict(error='KiCad endpoint not found.'),404)
+
+    def kicad_get(self,path,parts):
+        if path=='/api/kicad/example':
+            example=ROOT/'examples'/'USB-UART'/'USB-UART.kicad_pcb'
+            if not example.exists():example=ROOT/'prototypes'/'v0.9-mac'/'examples'/'USB-UART.kicad_pcb'
+            self.file(example if example.exists() else ROOT/'examples'/'two-layer-demo.kicad_pcb',attachment=True);return
+        if path=='/api/kicad/example-project':
+            example=ROOT/'examples'/'USB-UART'/'USB-UART.kicad_pro'
+            if not example.exists():example=ROOT/'prototypes'/'v0.9-mac'/'examples'/'USB-UART.kicad_pro'
+            self.file(example if example.exists() else ROOT/'examples'/'two-layer-demo.kicad_pro');return
+        if path=='/api/kicad/example-project.zip':
+            archive=ROOT/'examples'/'USB-UART.zip'
+            self.file(archive if archive.exists() else ROOT/'USB-UART.zip',attachment=True);return
+        if path=='/api/kicad/status':
+            from pcb_simulator.kicad_preview import status
+            self.send_json(dict(**status(),example_archive_available=(ROOT/'examples'/'USB-UART.zip').is_file() or (ROOT/'USB-UART.zip').is_file()));return
+        if len(parts)>=4 and parts[:3]==['api','kicad','boards'] and ID.fullmatch(parts[3]):
+            folder=DATA/'boards'/parts[3];meta=read_json(folder/'meta.json')
+            if not meta:self.send_json(dict(error='Board not found.'),404);return
+            if len(parts)==4:
+                board=read_json(folder/'board.json')
+                job=self.workbench.job(meta.get('job_id')) or {}
+                result=dict(meta);result.update(status=job.get('status','succeeded' if board and meta.get('restored_from_workspace') else 'failed'),error=job.get('error'),board=board)
+                self.send_json(result);return
+            # Export file names are fixed; arbitrary paths and the original PCB are not served.
+            if len(parts)==6 and parts[4]=='full' and parts[5] in ('top.svg','bottom.svg'):
+                self.file(folder/'full'/parts[5]);return
+            if len(parts)==6 and parts[4]=='coloured' and parts[5] in ('top.svg','bottom.svg'):
+                self.file(folder/'coloured'/parts[5]);return
+            if len(parts)==7 and parts[4]=='nets' and ID.fullmatch(parts[5]) and parts[6] in ('top.svg','bottom.svg'):
+                self.file(folder/'nets'/parts[5]/parts[6]);return
+            if len(parts)>=6 and parts[4]=='exports' and ID.fullmatch(parts[5]):
+                relative='/'.join(parts[6:])
+                if relative in ('selection.json','handoff.json','preview.json','copper.xao','highlight/top.svg','highlight/bottom.svg'):
+                    target=folder/'exports'/parts[5]/relative
+                    if relative.endswith('.json') and not target.exists():self.send_json(dict(error='Export is not ready.'),404);return
+                    self.file(target,attachment=relative.endswith('.xao'));return
+        self.send_json(dict(error='KiCad endpoint not found.'),404)
 
     def finish_model(self,key,filename,digest):
         folder=DATA/'models'/key
@@ -343,6 +483,10 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as exc:self.send_json(dict(error=str(exc)),500)
     def get(self):
         path=unquote(urlsplit(self.path).path);parts=path.strip('/').split('/')
+        if path.startswith('/api/kicad/'):
+            return self.kicad_get(path,parts)
+        if path=='/api/workspace/capabilities':
+            self.send_json(dict(native_save=bool(getattr(self.server,'native_workspace_save',False))));return
         if path=='/api/health':self.send_json(dict(status='ok',service='PCB Simulation Workbench',name='Salt and Pepper',version='2.0',local_only=True));return
         if path=='/api/models':
             rows=[read_json(p,{}) for p in (DATA/'models').glob('*/meta.json')]
@@ -377,7 +521,9 @@ class Handler(BaseHTTPRequestHandler):
     def file(self,path:Path,attachment=False):
         if not path.is_file():self.send_json(dict(error='File not found.'),404);return
         self.send_response(200);self.send_header('Content-Type',mimetypes.guess_type(path.name)[0] or 'application/octet-stream');self.send_header('Content-Length',str(path.stat().st_size));self.send_header('Cache-Control','no-cache');self.send_header('X-Content-Type-Options','nosniff')
-        if attachment:self.send_header('Content-Disposition','attachment; filename="'+path.name.replace('"','')+'"')
+        if attachment:
+            fallback=path.name.encode('ascii','replace').decode().replace('"','_').replace('\\','_')
+            self.send_header('Content-Disposition','attachment; filename="'+fallback+'"; filename*=UTF-8\'\''+quote(path.name,safe=''))
         self.end_headers()
         with path.open('rb') as f:shutil.copyfileobj(f,self.wfile,1024*1024)
 
@@ -386,6 +532,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--port',type=int,default=8765);parser.add_argument('--no-browser',action='store_true');parser.add_argument('--stop',action='store_true')
     parser.add_argument('--data-dir',type=Path,help='Writable saved models, jobs and runs directory.')
     parser.add_argument('--desktop-parent',type=int,help=argparse.SUPPRESS)
+    parser.add_argument('--native-workspace-dialogs',action='store_true',help='Enable native Open/Save dialogs for desktop source testing.')
     args=parser.parse_args()
     if args.data_dir:DATA=args.data_dir.expanduser().resolve()
     if args.stop:
@@ -419,6 +566,10 @@ def main():
         raise SystemExit(f'Cannot start port {args.port}: {exc}. Use --port with another port.')
     workbench=Workbench()
     server.workbench=workbench
+    server.desktop_parent=args.desktop_parent
+    server.native_workspace_save=sys.platform in ('darwin','win32') and bool(args.desktop_parent or args.native_workspace_dialogs)
+    server.workspace_save_lock=threading.Lock()
+    server.workspace_files={}
     server.control_token=uuid.uuid4().hex
     write_json(DATA/'server.json',dict(pid=os.getpid(),port=server.server_port,token=server.control_token))
     url=f'http://127.0.0.1:{server.server_port}/'

@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def main():
     target = ROOT / 'desktop' / 'licenses'
+    target.mkdir(parents=True,exist_ok=True)
     for name in ['LICENSE', 'THIRD_PARTY_NOTICES.md', 'licenses/GPL-3.0.txt', 'licenses/CC-BY-4.0.txt']:
         shutil.copy2(ROOT / name, target / Path(name).name)
     lines = [f'Python {sys.version}']

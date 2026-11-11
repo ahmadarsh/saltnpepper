@@ -100,23 +100,56 @@ def inspect_model(source, output_dir, emit):
     try:
         _start(source);inventory=_inventory(source);_save(folder/'inventory.json',inventory)
         bounds=np.asarray(inventory['bounds_mm']);center=np.asarray(inventory['center'])
-        size=max(float(np.max(bounds[3:]-bounds[:3]))/25,.05)
-        gmsh.option.setNumber('Mesh.MeshSizeMax',size)
-        gmsh.option.setNumber('Mesh.MeshSizeMin',size/5)
-        gmsh.option.setNumber('Mesh.MeshSizeFromCurvature',8)
-        gmsh.option.setNumber('Mesh.MeshSizeFromPoints',0)
-        gmsh.option.setNumber('Mesh.MeshSizeExtendFromBoundary',0)
-        emit('importing',f'Tessellating {len(inventory["solids"])} solid bodies for selection')
-        gmsh.model.mesh.generate(2)
-        tags,xyz,_=gmsh.model.mesh.getNodes();order=np.argsort(tags);tags=tags[order];xyz=xyz.reshape(-1,3)[order]
-        bodies=[]
+        # Use OCC's display triangulation instead of an isotropic FE surface
+        # mesh: round barrel walls need angular resolution, not dense axial
+        # subdivisions. Chord tolerance is absolute mm, independent of board
+        # extent, so small holes stay smooth when imported with large copper.
+        angular_deflection=math.pi/16  # about 64 segments per full circle
+        linear_deflection=.002
+        gmsh.option.setNumber('Mesh.StlAngularDeflection',angular_deflection)
+        gmsh.option.setNumber('Mesh.StlLinearDeflectionRelative',0)
+        gmsh.option.setNumber('Mesh.StlLinearDeflection',linear_deflection)
+        gmsh.option.setNumber('Mesh.StlOneSolidPerSurface',2)
+        gmsh.option.setNumber('Mesh.Binary',0)
+        # These temporary display groups affect neither the source CAD file nor
+        # later simulation meshing, which reimports it in a fresh Gmsh session.
+        for dimension,tag in gmsh.model.getPhysicalGroups():
+            name=gmsh.model.getPhysicalName(dimension,tag)
+            if name:gmsh.model.removePhysicalName(name)
+        gmsh.model.removePhysicalGroups()
+        prefix='Salt_Pepper_Preview_Body_'
         for row in inventory['solids']:
             faces=[abs(t) for d,t in gmsh.model.getBoundary([(3,row['tag'])],oriented=False) if d==2]
-            triangles=_triangles(faces,tags);nodes,local=np.unique(triangles,return_inverse=True)
+            gmsh.model.addPhysicalGroup(2,faces,name=prefix+str(row['tag']))
+        emit('importing',f'Tessellating {len(inventory["solids"])} solid bodies for selection')
+        display_stl=folder/'preview-surfaces.stl'
+        gmsh.write(str(display_stl))
+        raw={row['tag']:[] for row in inventory['solids']};current=None
+        try:
+            with display_stl.open(encoding='ascii') as stream:
+                for line in stream:
+                    fields=line.split()
+                    if not fields:continue
+                    if fields[0]=='solid':
+                        name=' '.join(fields[1:])
+                        current=int(name[len(prefix):]) if name.startswith(prefix) else None
+                        if current is not None and current not in raw:raise ValueError('Unexpected CAD preview body tag.')
+                    elif fields[0]=='endsolid':current=None
+                    elif fields[0]=='vertex' and current is not None:
+                        if len(fields)!=4:raise ValueError('Malformed CAD preview triangle.')
+                        raw[current].append(tuple(map(float,fields[1:])))
+        finally:display_stl.unlink(missing_ok=True)
+        bodies=[]
+        for row in inventory['solids']:
+            points=np.asarray(raw[row['tag']],dtype=float)
+            if not len(points) or len(points)%3 or not np.all(np.isfinite(points)):
+                raise ValueError('CAD preview contains missing or invalid surface triangles.')
+            xyz,local=np.unique(points,axis=0,return_inverse=True)
             bodies.append(dict(tag=row['tag'],name=row['name'],kind=row['kind'],bounds_mm=row['bounds_mm'],
-                vertices_b64=base64.b64encode(np.asarray(xyz[nodes]-center,dtype='<f4').tobytes()).decode('ascii'),
+                vertices_b64=base64.b64encode(np.asarray(xyz-center,dtype='<f4').tobytes()).decode('ascii'),
                 triangles_b64=base64.b64encode(np.asarray(local,dtype='<u4').tobytes()).decode('ascii')))
-        _save(folder/'preview.json',dict(center=center.tolist(),bounds_mm=bounds.tolist(),bodies=bodies))
+        _save(folder/'preview.json',dict(center=center.tolist(),bounds_mm=bounds.tolist(),bodies=bodies,
+            tessellation=dict(method='OpenCASCADE display surfaces',angular_deflection_rad=angular_deflection,linear_deflection_mm=linear_deflection)))
         emit('importing','CAD inventory and selectable surface preview ready',solid_count=len(bodies))
         return inventory
     finally:_finish(folder)
@@ -146,9 +179,18 @@ def _prepare(inventory, input_tags, output_tags, p, folder, emit):
     if set(input_tags)&set(output_tags):raise ValueError('Input and output pad selections must be disjoint')
     if not selected<=set(by_tag):raise ValueError('Selected solid tags do not belong to this STEP inventory; import it again')
     source_volumes=gmsh.model.getEntities(3);bounds=_bounds(source_volumes)
-    nonports=[(3,r['tag']) for r in rows if r['tag'] not in selected]
-    pad_rows=[r for r in rows if r['tag'] in selected];pads=[(3,r['tag']) for r in pad_rows]
-    emit('fusing',f'Uniting {len(nonports)} conductor solids while preserving {len(pads)} selected pad regions')
+    input_tags=sorted({by_tag[t].get('kicad_pad_tag',t) for t in input_tags})
+    output_tags=sorted({by_tag[t].get('kicad_pad_tag',t) for t in output_tags})
+    if set(input_tags)&set(output_tags):raise ValueError('Input and output selections refer to the same pad')
+    selected=set(input_tags+output_tags)
+    pad_rows=[r for r in rows if r['tag'] in selected]
+    members=[list(r.get('pad_volume_tags',[r['tag']])) for r in pad_rows]
+    selected_volumes={tag for group in members for tag in group}
+    if not selected_volumes<=set(by_tag):raise ValueError('A selected pad refers to missing copper solids; import it again')
+    if sum(map(len,members))!=len(selected_volumes):raise ValueError('Selected pads share copper solids')
+    nonports=[(3,r['tag']) for r in rows if r['tag'] not in selected_volumes]
+    pads=[(3,tag) for group in members for tag in group]
+    emit('fusing',f'Uniting {len(nonports)} conductor solids while preserving {len(pad_rows)} selected pads ({len(pads)} copper pieces)')
     if len(nonports)>1:conductor,_=gmsh.model.occ.fuse(nonports[:1],nonports[1:])
     else:conductor=nonports
     gmsh.model.occ.synchronize()
@@ -164,19 +206,26 @@ def _prepare(inventory, input_tags, output_tags, p, folder, emit):
     external_faces={abs(t) for d,t in external if d==2}
     board_mid=(bounds[2]+bounds[5])/2;ports=[]
     tolerance=max(1e-5,float(np.max(bounds[3:]-bounds[:3]))*1e-8)
-    for row,children in zip(pad_rows,pad_mapping):
+    # Boolean maps are per physical solid; reassemble them into logical pads.
+    offset=0;logical_mapping=[]
+    for group in members:
+        logical_mapping.append([child for result in pad_mapping[offset:offset+len(group)] for child in result])
+        offset+=len(group)
+    for row,children in zip(pad_rows,logical_mapping):
         volume_tags=sorted({t for d,t in children if d==3})
         role='input' if row['tag'] in input_tags else 'output'
+        pad_bounds=row.get('pad_bounds_mm',row['bounds_mm'])
+        pad_centroid=row.get('pad_centroid_mm',row['centroid_mm'])
         side=p[role+'_face']
-        if side=='auto':side='top' if row['centroid_mm'][2]>=board_mid else 'bottom'
-        target=row['bounds_mm'][5 if side=='top' else 2]
+        if side=='auto':side='top' if pad_centroid[2]>=board_mid else 'bottom'
+        target=pad_bounds[5 if side=='top' else 2]
         faces=[]
         for dim,face in gmsh.model.getBoundary([(3,t) for t in volume_tags],combined=True,oriented=False):
             face=abs(face);bb=gmsh.model.getBoundingBox(2,face)
             if face in external_faces and abs(bb[2]-target)<tolerance and abs(bb[5]-bb[2])<tolerance:faces.append(face)
         if not faces:raise ValueError(f'Pad {row["name"]} has no exposed planar {side} electrode face. Try the other face or select another pad; model orientation must use Z through the board.')
-        ports.append(dict(name=row['name'],role=role,original_solid=row['tag'],bounds_mm=row['bounds_mm'],
-            centroid_mm=row['centroid_mm'],face=side,volume_tags=volume_tags,surface_tags=sorted(set(faces))))
+        ports.append(dict(name=row['name'],role=role,original_solid=row['tag'],original_solids=list(row.get('pad_volume_tags',[row['tag']])),bounds_mm=pad_bounds,
+            centroid_mm=pad_centroid,face=side,volume_tags=volume_tags,surface_tags=sorted(set(faces))))
     pad_volume_tags={tag for port in ports for tag in port['volume_tags']}
     conductor_tags=[t for _,t in allvols if t not in pad_volume_tags]
     if conductor_tags:gmsh.model.addPhysicalGroup(3,conductor_tags,1,'Copper_Conductor')
@@ -255,7 +304,7 @@ def run_simulation(source, inventory, output_dir, input_tags, output_tags, param
     p=_parameters(parameters);input_tags=sorted(set(map(int,input_tags)));output_tags=sorted(set(map(int,output_tags)))
     digest=hashlib.sha256(source.read_bytes()).hexdigest()
     if inventory.get('source_sha256') and digest!=inventory['source_sha256']:raise ValueError('STEP source changed since inspection. Import it again before selecting ports.')
-    copied=folder/'source.step'
+    copied=folder/('source.xao' if source.suffix.lower()=='.xao' else 'source.step')
     if source.resolve()!=copied.resolve():shutil.copy2(source,copied)
     _save(folder/'config.json',dict(source=source.name,source_sha256=digest,input_tags=input_tags,output_tags=output_tags,parameters=p))
     _save(folder/'inventory.json',inventory)
@@ -292,7 +341,7 @@ def run_simulation(source, inventory, output_dir, input_tags, output_tags, param
             refinement['relative_resistance_change']=abs(runs[-1]['resistance_ohm']-runs[-2]['resistance_ohm'])/runs[-1]['resistance_ohm']
             if p['analysis_mode']=='electrothermal':refinement['maximum_temperature_change_C']=abs(runs[-1]['maximum_temperature_C']-runs[-2]['maximum_temperature_C'])
         report['refinement']=refinement;report['parameters']=p
-        report['artifacts']=dict(fields='fields.npz',fused_step='fused.step',source_step='source.step',latest_mesh=meshfolder.name,
+        report['artifacts']=dict(fields='fields.npz',fused_step='fused.step',source_step=copied.name,latest_mesh=meshfolder.name,
             ports=f'{meshfolder.name}/ports.json',volume_mesh=f'{meshfolder.name}/volume.msh',surface_mesh=f'{meshfolder.name}/surface.msh')
         emit('postprocessing','Saving final fields, conservation checks and refinement comparison')
         shutil.copy2(meshfolder/'fields.npz',folder/'fields.npz')

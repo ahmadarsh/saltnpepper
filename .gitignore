@@ -7,6 +7,7 @@ backups/
 desktop/node_modules/
 desktop/backend-build/
 desktop/backend-dist/
+desktop/kicad-runtime/
 desktop/src-tauri/target/
 dist/
 release/
@@ -16,3 +17,23 @@ pcb_simulator/live_test_run.json
 NEW_MODELS/
 SNAPSHOT.json
 design_previews/
+
+# Local review builds and supplied private project files
+prototypes/
+media/
+NET1.step
+USB-UART.zip
+
+# Software-only source tree: local inputs and generated artifacts
+USB-UART/
+.local-files/
+*.pepper
+*.kicad_prl
+*.mp4
+*.mov
+*.mkv
+*.gif
+*.dmg
+*.zip
+desktop/licenses/
+docs/
